@@ -5,9 +5,9 @@ description: >-
   BLoC, Riverpod, Provider, GetX, GoRouter, AutoRoute, Dio, GetIt, 
   Freezed, Firebase, L10n, and more — all with the latest package versions.
 version: 1.0.0
-homepage: https://github.com/vnaaborern/flutter_architecture_generator
-repository: https://github.com/vnaaborern/flutter_architecture_generator
-issue_tracker: https://github.com/vnaaborern/flutter_architecture_generator/issues
+homepage: https://github.com/Naimish-Kumar/flutter_architecture_generator
+repository: https://github.com/Naimish-Kumar/flutter_architecture_generator
+issue_tracker: https://github.com/Naimish-Kumar/flutter_architecture_generator/issues
 topics:
   - cli
   - clean-architecture
