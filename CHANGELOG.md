@@ -1,4 +1,4 @@
-## 1.0.0
+## 1.0.0 - 2026-02-21
 
 - 🏗️ Clean Architecture scaffolding with domain, data, and presentation layers.
 - ⚡ Four state management options: BLoC, Riverpod, Provider, and GetX.

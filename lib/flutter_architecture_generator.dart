@@ -1,3 +1,7 @@
+/// A powerful CLI tool to instantly generate a production-ready Flutter project
+/// architecture following Clean Architecture principles.
+library;
+
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'src/commands/generate_arch_command.dart';
@@ -5,9 +9,13 @@ import 'src/commands/generate_feature_command.dart';
 import 'src/commands/generate_model_command.dart';
 import 'src/commands/generate_page_command.dart';
 
+/// The command runner for the Flutter Architecture Generator CLI.
 class FlutterArchGenRunner extends CommandRunner<int> {
   final Logger _logger;
 
+  /// Creates a new instance of [FlutterArchGenRunner].
+  ///
+  /// Takes an optional [logger] for output.
   FlutterArchGenRunner({Logger? logger})
       : _logger = logger ?? Logger(),
         super(
