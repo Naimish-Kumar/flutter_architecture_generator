@@ -1,0 +1,33 @@
+name: flutter_architecture_generator
+description: >-
+  A powerful, production-ready CLI tool to instantly scaffold professional 
+  Flutter applications following Clean Architecture principles. Supports 
+  BLoC, Riverpod, Provider, GetX, GoRouter, AutoRoute, Dio, GetIt, 
+  Freezed, Firebase, L10n, and more — all with the latest package versions.
+version: 1.0.0
+homepage: https://github.com/vnaaborern/flutter_architecture_generator
+repository: https://github.com/vnaaborern/flutter_architecture_generator
+issue_tracker: https://github.com/vnaaborern/flutter_architecture_generator/issues
+topics:
+  - cli
+  - clean-architecture
+  - code-generation
+  - scaffolding
+  - flutter
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+executables:
+  flutter_arch_gen: flutter_architecture_generator
+
+dependencies:
+  args: ^2.5.0
+  mason_logger: ^0.3.3
+  path: ^1.9.0
+  yaml: ^3.1.2
+  yaml_edit: ^2.2.0
+
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.24.0
