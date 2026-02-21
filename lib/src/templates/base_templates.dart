@@ -133,12 +133,13 @@ Future<void> init() async {
   static String apiClientContent() {
     return '''
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiClient {
   final Dio dio;
 
   ApiClient(this.dio) {
-    dio.options.baseUrl = 'https://api.example.com';
+    dio.options.baseUrl = dotenv.env['API_BASE_URL'] ?? 'https://api.example.com';
     dio.options.connectTimeout = const Duration(seconds: 5);
     dio.options.receiveTimeout = const Duration(seconds: 3);
     

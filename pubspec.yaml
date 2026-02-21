@@ -3,7 +3,7 @@ description: >-
   CLI tool for scaffolding professional Flutter apps following Clean 
   Architecture. Supports BLoC, Riverpod, GoRouter, Dio, and more for 
   production-ready code generation.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/Naimish-Kumar/flutter_architecture_generator
 repository: https://github.com/Naimish-Kumar/flutter_architecture_generator
 issue_tracker: https://github.com/Naimish-Kumar/flutter_architecture_generator/issues

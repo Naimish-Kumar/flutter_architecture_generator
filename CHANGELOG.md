@@ -1,3 +1,7 @@
+## 1.0.1 - 2026-02-21
+
+- ✨ Improved: `ApiClient` now uses environment variables (`flutter_dotenv`) for the base URL instead of a hardcoded string.
+
 ## 1.0.0 - 2026-02-21
 
 - 🏗️ Clean Architecture scaffolding with domain, data, and presentation layers.
