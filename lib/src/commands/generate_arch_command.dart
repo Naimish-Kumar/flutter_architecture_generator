@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import '../models/generator_config.dart';
@@ -6,6 +7,8 @@ import '../utils/feature_helper.dart';
 import '../utils/pubspec_helper.dart';
 
 class GenerateArchCommand extends Command<int> {
+
+  GenerateArchCommand({required Logger logger}) : _logger = logger;
   final Logger _logger;
 
   @override
@@ -13,8 +16,6 @@ class GenerateArchCommand extends Command<int> {
 
   @override
   String get description => 'Initialize Flutter project architecture.';
-
-  GenerateArchCommand({required Logger logger}) : _logger = logger;
 
   @override
   Future<int> run() async {

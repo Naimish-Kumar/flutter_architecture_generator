@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import '../utils/feature_helper.dart';
@@ -5,13 +6,6 @@ import '../utils/file_helper.dart';
 import '../models/generator_config.dart';
 
 class GenerateFeatureCommand extends Command<int> {
-  final Logger _logger;
-
-  @override
-  String get name => 'feature';
-
-  @override
-  String get description => 'Generate a new feature module.';
 
   GenerateFeatureCommand({required Logger logger}) : _logger = logger {
     argParser.addOption('name', abbr: 'n', help: 'Name of the feature');
@@ -23,6 +17,13 @@ class GenerateFeatureCommand extends Command<int> {
       defaultsTo: StateManagement.bloc.name,
     );
   }
+  final Logger _logger;
+
+  @override
+  String get name => 'feature';
+
+  @override
+  String get description => 'Generate a new feature module.';
 
   @override
   Future<int> run() async {

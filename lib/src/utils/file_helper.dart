@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart' as p;

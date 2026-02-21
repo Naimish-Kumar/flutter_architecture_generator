@@ -11,8 +11,6 @@ import 'src/commands/generate_page_command.dart';
 
 /// The command runner for the Flutter Architecture Generator CLI.
 class FlutterArchGenRunner extends CommandRunner<int> {
-  final Logger _logger;
-
   /// Creates a new instance of [FlutterArchGenRunner].
   ///
   /// Takes an optional [logger] for output.
@@ -27,6 +25,8 @@ class FlutterArchGenRunner extends CommandRunner<int> {
     addCommand(GenerateModelCommand(logger: _logger));
     addCommand(GeneratePageCommand(logger: _logger));
   }
+
+  final Logger _logger;
 
   @override
   Future<int?> run(Iterable<String> args) async {

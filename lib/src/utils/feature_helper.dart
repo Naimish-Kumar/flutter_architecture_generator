@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:mason_logger/mason_logger.dart';
@@ -151,8 +152,8 @@ class ${pascalName}RemoteDataSourceImpl implements I${pascalName}RemoteDataSourc
     // 8. Pages
     final isAutoRoute = config.routing == Routing.autoRoute;
     final autoRouteImport =
-        isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : "";
-    final routeAnnotation = isAutoRoute ? "@RoutePage()\n" : "";
+        isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : '';
+    final routeAnnotation = isAutoRoute ? '@RoutePage()\n' : '';
 
     if (featureName == 'auth') {
       _generateAuthPages(featurePath, config, packageName);
@@ -249,9 +250,9 @@ void main() {
 
     final pascalName = StringUtils.toPascalCase(name);
     final snakeName = StringUtils.toSnakeCase(name);
-    final pageClass = "${pascalName}Page";
+    final pageClass = '${pascalName}Page';
     final pagePath =
-        "package:$packageName/features/$snakeName/presentation/pages/";
+        'package:$packageName/features/$snakeName/presentation/pages/';
     final import = "import '$pagePath${snakeName}_page.dart';";
 
     if (name == 'auth') {
@@ -260,10 +261,10 @@ void main() {
       final registerImport = "import '${pagePath}register_page.dart';";
       String contents = routerFile.readAsStringSync();
       if (!contents.contains(loginImport)) {
-        contents = "$loginImport\n$contents";
+        contents = '$loginImport\n$contents';
       }
       if (!contents.contains(registerImport)) {
-        contents = "$registerImport\n$contents";
+        contents = '$registerImport\n$contents';
       }
 
       final routes = '''
@@ -277,13 +278,13 @@ void main() {
     ),
 ''';
       if (!contents.contains("path: '/login'")) {
-        contents = contents.replaceFirst("routes: [", "routes: [\n$routes");
+        contents = contents.replaceFirst('routes: [', 'routes: [\n$routes');
       }
       routerFile.writeAsStringSync(contents);
     } else {
       String contents = routerFile.readAsStringSync();
       if (!contents.contains(import)) {
-        contents = "$import\n$contents";
+        contents = '$import\n$contents';
       }
 
       final route = '''
@@ -293,7 +294,7 @@ void main() {
     ),
 ''';
       if (!contents.contains("path: '/$snakeName'")) {
-        contents = contents.replaceFirst("routes: [", "routes: [\n$route");
+        contents = contents.replaceFirst('routes: [', 'routes: [\n$route');
       }
       routerFile.writeAsStringSync(contents);
     }
@@ -314,10 +315,10 @@ void main() {
           "import 'package:$packageName/features/$snakeName/presentation/pages/register_page.dart';";
       String contents = routerFile.readAsStringSync();
       if (!contents.contains(loginImport)) {
-        contents = "$loginImport\n$contents";
+        contents = '$loginImport\n$contents';
       }
       if (!contents.contains(registerImport)) {
-        contents = "$registerImport\n$contents";
+        contents = '$registerImport\n$contents';
       }
       final routes = '''
       AutoRoute(page: LoginRoute.page),
@@ -333,7 +334,7 @@ void main() {
           "import 'package:$packageName/features/$snakeName/presentation/pages/${snakeName}_page.dart';";
       String contents = routerFile.readAsStringSync();
       if (!contents.contains(pageImport)) {
-        contents = "$pageImport\n$contents";
+        contents = '$pageImport\n$contents';
       }
       final route = '      AutoRoute(page: ${pascalName}Route.page),\n';
       if (!contents.contains('${pascalName}Route.page')) {
@@ -473,8 +474,8 @@ class ${pascalName}Controller extends GetxController {
       String path, GeneratorConfig config, String packageName) {
     final isAutoRoute = config.routing == Routing.autoRoute;
     final autoRouteImport =
-        isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : "";
-    final routeAnnotation = isAutoRoute ? "@RoutePage()\n" : "";
+        isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : '';
+    final routeAnnotation = isAutoRoute ? '@RoutePage()\n' : '';
 
     _writeFile(p.join(path, 'presentation', 'pages', 'login_page.dart'), '''
 import 'package:flutter/material.dart';
@@ -604,7 +605,7 @@ class RegisterPage extends StatelessWidget {
 
     for (var imp in imports) {
       if (!contents.contains(imp)) {
-        contents = "$imp\n$contents";
+        contents = '$imp\n$contents';
       }
     }
 
@@ -616,19 +617,19 @@ class RegisterPage extends StatelessWidget {
   sl.registerLazySingleton(() => Get${pascalName}UseCase(sl()));
 ''';
 
-    String logicReg = "";
+    String logicReg = '';
     switch (config.stateManagement) {
       case StateManagement.bloc:
         logicReg =
-            "  sl.registerFactory(() => ${pascalName}Bloc(get${pascalName}UseCase: sl()));\n";
+            '  sl.registerFactory(() => ${pascalName}Bloc(get${pascalName}UseCase: sl()));\n';
         break;
       case StateManagement.provider:
         logicReg =
-            "  sl.registerFactory(() => ${pascalName}Provider(get${pascalName}UseCase: sl()));\n";
+            '  sl.registerFactory(() => ${pascalName}Provider(get${pascalName}UseCase: sl()));\n';
         break;
       case StateManagement.getx:
         logicReg =
-            "  sl.registerFactory(() => ${pascalName}Controller(get${pascalName}UseCase: sl()));\n";
+            '  sl.registerFactory(() => ${pascalName}Controller(get${pascalName}UseCase: sl()));\n';
         break;
       default:
         break;
@@ -636,8 +637,8 @@ class RegisterPage extends StatelessWidget {
 
     final fullReg = registrations + logicReg;
 
-    if (!contents.contains("// $pascalName Feature")) {
-      contents = contents.replaceFirst("// Features", "// Features\n$fullReg");
+    if (!contents.contains('// $pascalName Feature')) {
+      contents = contents.replaceFirst('// Features', '// Features\n$fullReg');
     }
 
     diFile.writeAsStringSync(contents);

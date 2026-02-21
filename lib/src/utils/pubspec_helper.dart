@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:io';
 import 'package:yaml_edit/yaml_edit.dart';
 import '../models/generator_config.dart';

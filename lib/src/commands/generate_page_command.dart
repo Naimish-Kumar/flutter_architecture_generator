@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -8,6 +9,11 @@ import '../utils/string_utils.dart';
 import '../models/generator_config.dart';
 
 class GeneratePageCommand extends Command<int> {
+
+  GeneratePageCommand({required Logger logger}) : _logger = logger {
+    argParser.addOption('feature',
+        abbr: 'f', help: 'Target feature for the page');
+  }
   final Logger _logger;
 
   @override
@@ -15,11 +21,6 @@ class GeneratePageCommand extends Command<int> {
 
   @override
   String get description => 'Generate a new page.';
-
-  GeneratePageCommand({required Logger logger}) : _logger = logger {
-    argParser.addOption('feature',
-        abbr: 'f', help: 'Target feature for the page');
-  }
 
   @override
   Future<int> run() async {
@@ -42,8 +43,8 @@ class GeneratePageCommand extends Command<int> {
 
       final isAutoRoute = config?.routing == Routing.autoRoute;
       final autoRouteImport =
-          isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : "";
-      final routeAnnotation = isAutoRoute ? "@RoutePage()\n" : "";
+          isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : '';
+      final routeAnnotation = isAutoRoute ? '@RoutePage()\n' : '';
 
       final content = '''
 import 'package:flutter/material.dart';
@@ -107,16 +108,16 @@ class ${className}Page extends StatelessWidget {
 
     final pascalName = StringUtils.toPascalCase(name);
     final snakeName = StringUtils.toSnakeCase(name);
-    final pageClass = "${pascalName}Page";
+    final pageClass = '${pascalName}Page';
 
     final relativePath = _toImportRelativePath(targetPath);
     final importPath =
-        "package:$packageName/$relativePath/${snakeName}_page.dart";
+        'package:$packageName/$relativePath/${snakeName}_page.dart';
     final import = "import '$importPath';";
 
     String contents = routerFile.readAsStringSync();
     if (!contents.contains(import)) {
-      contents = "$import\n$contents";
+      contents = '$import\n$contents';
     }
 
     final route = '''
@@ -126,7 +127,7 @@ class ${className}Page extends StatelessWidget {
     ),
 ''';
     if (!contents.contains("path: '/$snakeName'")) {
-      contents = contents.replaceFirst("routes: [", "routes: [\n$route");
+      contents = contents.replaceFirst('routes: [', 'routes: [\n$route');
     }
     routerFile.writeAsStringSync(contents);
   }
@@ -141,12 +142,12 @@ class ${className}Page extends StatelessWidget {
 
     final relativePath = _toImportRelativePath(targetPath);
     final importPath =
-        "package:$packageName/$relativePath/${snakeName}_page.dart";
+        'package:$packageName/$relativePath/${snakeName}_page.dart';
     final import = "import '$importPath';";
 
     String contents = routerFile.readAsStringSync();
     if (!contents.contains(import)) {
-      contents = "$import\n$contents";
+      contents = '$import\n$contents';
     }
 
     final route = '      AutoRoute(page: ${pascalName}Route.page),\n';

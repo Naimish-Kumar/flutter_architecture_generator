@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs
 import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
@@ -5,6 +6,11 @@ import 'package:path/path.dart' as p;
 import '../utils/string_utils.dart';
 
 class GenerateModelCommand extends Command<int> {
+
+  GenerateModelCommand({required Logger logger}) : _logger = logger {
+    argParser.addOption('feature',
+        abbr: 'f', help: 'Target feature for the model');
+  }
   final Logger _logger;
 
   @override
@@ -12,11 +18,6 @@ class GenerateModelCommand extends Command<int> {
 
   @override
   String get description => 'Generate a new model.';
-
-  GenerateModelCommand({required Logger logger}) : _logger = logger {
-    argParser.addOption('feature',
-        abbr: 'f', help: 'Target feature for the model');
-  }
 
   @override
   Future<int> run() async {

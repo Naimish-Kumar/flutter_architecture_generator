@@ -1,13 +1,14 @@
+// ignore_for_file: public_member_api_docs
 import '../models/generator_config.dart';
 
 class BaseTemplates {
   static String mainContent(GeneratorConfig config, String packageName) {
     final firebaseImport = config.firebase
         ? "import 'package:firebase_core/firebase_core.dart';\nimport 'firebase_options.dart';"
-        : "";
+        : '';
     final firebaseInit = config.firebase
-        ? "\n  await Firebase.initializeApp(\n    options: DefaultFirebaseOptions.currentPlatform,\n  );"
-        : "";
+        ? '\n  await Firebase.initializeApp(\n    options: DefaultFirebaseOptions.currentPlatform,\n  );'
+        : '';
     final isAutoRoute = config.routing == Routing.autoRoute;
     final myAppConst = isAutoRoute ? '' : 'const ';
 
@@ -45,18 +46,18 @@ void main() async {
 
     final routerImport = useRouter
         ? "import 'package:$packageName/routes/app_router.dart';"
-        : "";
+        : '';
     final themeImport =
         "import 'package:$packageName/core/theme/app_theme.dart';";
     final riverpodImport = isRiverpod
         ? "import 'package:flutter_riverpod/flutter_riverpod.dart';"
-        : "";
+        : '';
     final l10nImport = config.localization
         ? "import 'package:flutter_localizations/flutter_localizations.dart';"
-        : "";
+        : '';
 
     final homeProp = useRouter
-        ? "routerConfig: router,"
+        ? 'routerConfig: router,'
         : "home: const Scaffold(body: Center(child: Text('Welcome'))),";
 
     final isAutoRoute = config.routing == Routing.autoRoute;
@@ -71,7 +72,7 @@ void main() async {
       supportedLocales: const [
         Locale('en', ''),
       ],'''
-        : "";
+        : '';
 
     var materialApp = '''
     MaterialApp${useRouter ? '.router' : ''}(

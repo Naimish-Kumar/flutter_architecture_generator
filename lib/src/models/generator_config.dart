@@ -1,13 +1,9 @@
+// ignore_for_file: public_member_api_docs
 enum StateManagement { bloc, riverpod, provider, getx }
 
 enum Routing { goRouter, autoRoute, navigator }
 
 class GeneratorConfig {
-  final StateManagement stateManagement;
-  final Routing routing;
-  final bool localization;
-  final bool firebase;
-  final bool tests;
 
   GeneratorConfig({
     required this.stateManagement,
@@ -16,14 +12,6 @@ class GeneratorConfig {
     required this.firebase,
     required this.tests,
   });
-
-  Map<String, dynamic> toJson() => {
-        'stateManagement': stateManagement.name,
-        'routing': routing.name,
-        'localization': localization,
-        'firebase': firebase,
-        'tests': tests,
-      };
 
   factory GeneratorConfig.fromJson(Map<String, dynamic> json) =>
       GeneratorConfig(
@@ -34,4 +22,17 @@ class GeneratorConfig {
         firebase: json['firebase'] as bool,
         tests: json['tests'] as bool,
       );
+  final StateManagement stateManagement;
+  final Routing routing;
+  final bool localization;
+  final bool firebase;
+  final bool tests;
+
+  Map<String, dynamic> toJson() => {
+        'stateManagement': stateManagement.name,
+        'routing': routing.name,
+        'localization': localization,
+        'firebase': firebase,
+        'tests': tests,
+      };
 }
