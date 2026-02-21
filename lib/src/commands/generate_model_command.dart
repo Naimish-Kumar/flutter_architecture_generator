@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
+import '../utils/file_helper.dart';
 import '../utils/string_utils.dart';
 
 class GenerateModelCommand extends Command<int> {
-
   GenerateModelCommand({required Logger logger}) : _logger = logger {
     argParser.addOption('feature',
         abbr: 'f', help: 'Target feature for the model');
@@ -52,9 +52,12 @@ class $className with _\$$className {
 }
 ''';
 
+      final config = FileHelper.loadConfig();
+      final modelDir = config?.getModelsDirectory() ?? 'data/models';
+
       final targetPath = featureName != null
-          ? p.join('lib', 'features', StringUtils.toSnakeCase(featureName),
-              'data', 'models')
+          ? p.join(
+              'lib', 'features', StringUtils.toSnakeCase(featureName), modelDir)
           : p.join('lib', 'core', 'models');
 
       final file =

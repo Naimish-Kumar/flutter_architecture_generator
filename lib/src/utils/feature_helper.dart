@@ -17,22 +17,86 @@ class FeatureHelper {
     final featurePath = p.join(currentDir, 'lib', 'features', snakeFeatureName);
     final packageName = PubspecHelper.getPackageName();
 
-    final directories = [
-      'data/models',
-      'data/datasources',
-      'data/repositories',
-      'domain/entities',
-      'domain/repositories',
-      'domain/usecases',
-      'presentation/pages',
-      'presentation/widgets',
-      'presentation/${config.stateManagement.name}',
-    ];
+    final directories = _getDirectoriesForArchitecture(config);
 
     for (var dir in directories) {
       await Directory(p.join(featurePath, dir)).create(recursive: true);
     }
 
+    switch (config.architecture) {
+      case Architecture.clean:
+        await _generateCleanFeature(
+            featureName, config, packageName, featurePath);
+        break;
+      case Architecture.mvvm:
+        await _generateMVVMFeature(
+            featureName, config, packageName, featurePath);
+        break;
+      case Architecture.bloc:
+        await _generateBlocFeature(
+            featureName, config, packageName, featurePath);
+        break;
+      case Architecture.getx:
+        await _generateGetXFeature(
+            featureName, config, packageName, featurePath);
+        break;
+      case Architecture.provider:
+        await _generateProviderFeature(
+            featureName, config, packageName, featurePath);
+        break;
+    }
+  }
+
+  static List<String> _getDirectoriesForArchitecture(GeneratorConfig config) {
+    switch (config.architecture) {
+      case Architecture.clean:
+        return [
+          'data/models',
+          'data/datasources',
+          'data/repositories',
+          'domain/entities',
+          'domain/repositories',
+          'domain/usecases',
+          'presentation/pages',
+          'presentation/widgets',
+          'presentation/${config.stateManagement.name}',
+        ];
+      case Architecture.mvvm:
+        return [
+          'models',
+          'views/pages',
+          'views/widgets',
+          'view_models',
+          'services',
+        ];
+      case Architecture.bloc:
+        return [
+          'bloc',
+          'models',
+          'repositories',
+          'pages',
+          'widgets',
+        ];
+      case Architecture.getx:
+        return [
+          'controllers',
+          'models',
+          'views/pages',
+          'views/widgets',
+          'bindings',
+        ];
+      case Architecture.provider:
+        return [
+          'providers',
+          'models',
+          'pages',
+          'widgets',
+        ];
+    }
+  }
+
+  static Future<void> _generateCleanFeature(String featureName,
+      GeneratorConfig config, String packageName, String featurePath) async {
     final pascalName = StringUtils.toPascalCase(featureName);
     final snakeName = StringUtils.toSnakeCase(featureName);
 
@@ -113,7 +177,6 @@ class ${pascalName}RepositoryImpl implements I${pascalName}Repository {
     try {
       return await remoteDataSource.get${pascalName}FromApi();
     } catch (e) {
-      // Best practice: Map exceptions to Failures
       throw ServerFailure(e.toString());
     }
   }
@@ -150,18 +213,254 @@ class ${pascalName}RemoteDataSourceImpl implements I${pascalName}RemoteDataSourc
         featurePath, featureName, config, packageName);
 
     // 8. Pages
+    _generatePages(featurePath, featureName, config, packageName);
+
+    // 9. DI Registration
+    _registerInDI(featureName, config, packageName);
+
+    // 10. Router Registration
+    _registerInRouter(featureName, config, packageName);
+
+    // 11. Feature Tests
+    if (config.tests) {
+      _generateFeatureTest(featureName, config, packageName);
+    }
+  }
+
+  static Future<void> _generateMVVMFeature(String featureName,
+      GeneratorConfig config, String packageName, String featurePath) async {
+    final pascalName = StringUtils.toPascalCase(featureName);
+    final snakeName = StringUtils.toSnakeCase(featureName);
+
+    // 1. Model
+    _writeFile(p.join(featurePath, 'models', '${snakeName}_model.dart'), '''
+class ${pascalName}Model {
+  final int id;
+  const ${pascalName}Model({required this.id});
+
+  factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
+    return ${pascalName}Model(id: json['id'] as int);
+  }
+
+  Map<String, dynamic> toJson() => {'id': id};
+}
+''');
+
+    // 2. Service
+    _writeFile(p.join(featurePath, 'services', '${snakeName}_service.dart'), '''
+import 'package:$packageName/core/network/api_client.dart';
+import 'package:$packageName/features/$snakeName/models/${snakeName}_model.dart';
+
+class ${pascalName}Service {
+  final ApiClient apiClient;
+  ${pascalName}Service(this.apiClient);
+
+  Future<${pascalName}Model> fetch$pascalName() async {
+    final response = await apiClient.dio.get('/$snakeName');
+    return ${pascalName}Model.fromJson(response.data);
+  }
+}
+''');
+
+    // 3. ViewModel
+    _writeFile(
+        p.join(featurePath, 'view_models', '${snakeName}_view_model.dart'), '''
+import 'package:flutter/material.dart';
+import 'package:$packageName/features/$snakeName/services/${snakeName}_service.dart';
+import 'package:$packageName/features/$snakeName/models/${snakeName}_model.dart';
+
+class ${pascalName}ViewModel extends ChangeNotifier {
+  final ${pascalName}Service service;
+  ${pascalName}ViewModel(this.service);
+
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  ${pascalName}Model? _data;
+  ${pascalName}Model? get data => _data;
+
+  Future<void> loadData() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _data = await service.fetch$pascalName();
+    } catch (e) {
+      // Handle error
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+''');
+
+    // 4. Pages
+    _generatePages(featurePath, featureName, config, packageName);
+
+    // 5. DI
+    _registerInDI(featureName, config, packageName);
+
+    // 6. Router
+    _registerInRouter(featureName, config, packageName);
+
+    // 7. Tests
+    if (config.tests) {
+      _generateFeatureTest(featureName, config, packageName);
+    }
+  }
+
+  static Future<void> _generateBlocFeature(String featureName,
+      GeneratorConfig config, String packageName, String featurePath) async {
+    final pascalName = StringUtils.toPascalCase(featureName);
+    final snakeName = StringUtils.toSnakeCase(featureName);
+
+    // 1. Model
+    _writeFile(p.join(featurePath, 'models', '${snakeName}_model.dart'), '''
+class ${pascalName}Model {
+  final int id;
+  const ${pascalName}Model({required this.id});
+
+  factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
+    return ${pascalName}Model(id: json['id'] as int);
+  }
+}
+''');
+
+    // 2. Repository
+    _writeFile(
+        p.join(featurePath, 'repositories', '${snakeName}_repository.dart'), '''
+import 'package:$packageName/core/network/api_client.dart';
+import 'package:$packageName/features/$snakeName/models/${snakeName}_model.dart';
+
+class ${pascalName}Repository {
+  final ApiClient apiClient;
+  ${pascalName}Repository(this.apiClient);
+
+  Future<${pascalName}Model> getData() async {
+    final response = await apiClient.dio.get('/$snakeName');
+    return ${pascalName}Model.fromJson(response.data);
+  }
+}
+''');
+
+    // 3. Bloc
+    _generateStateManagementContent(
+        featurePath, featureName, config, packageName);
+
+    // 4. Pages
+    _generatePages(featurePath, featureName, config, packageName);
+
+    // 5. DI
+    _registerInDI(featureName, config, packageName);
+
+    // 6. Router
+    _registerInRouter(featureName, config, packageName);
+
+    // 7. Tests
+    if (config.tests) {
+      _generateFeatureTest(featureName, config, packageName);
+    }
+  }
+
+  static Future<void> _generateGetXFeature(String featureName,
+      GeneratorConfig config, String packageName, String featurePath) async {
+    final pascalName = StringUtils.toPascalCase(featureName);
+    final snakeName = StringUtils.toSnakeCase(featureName);
+
+    // 1. Model
+    _writeFile(p.join(featurePath, 'models', '${snakeName}_model.dart'), '''
+class ${pascalName}Model {
+  final int id;
+  const ${pascalName}Model({required this.id});
+
+  factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
+    return ${pascalName}Model(id: json['id'] as int);
+  }
+
+  Map<String, dynamic> toJson() => {'id': id};
+}
+''');
+
+    // 2. Controller
+    _generateStateManagementContent(
+        featurePath, featureName, config, packageName);
+
+    // 3. Binding
+    _writeFile(p.join(featurePath, 'bindings', '${snakeName}_binding.dart'), '''
+import 'package:get/get.dart';
+import 'package:$packageName/features/$snakeName/controllers/${snakeName}_controller.dart';
+
+class ${pascalName}Binding extends Bindings {
+  @override
+  void dependencies() {
+    Get.lazyPut(() => ${pascalName}Controller());
+  }
+}
+''');
+
+    // 4. Pages
+    _generatePages(featurePath, featureName, config, packageName);
+
+    // 5. DI
+    _registerInDI(featureName, config, packageName);
+
+    // 6. Router
+    _registerInRouter(featureName, config, packageName);
+
+    // 7. Tests
+    if (config.tests) {
+      _generateFeatureTest(featureName, config, packageName);
+    }
+  }
+
+  static Future<void> _generateProviderFeature(String featureName,
+      GeneratorConfig config, String packageName, String featurePath) async {
+    final pascalName = StringUtils.toPascalCase(featureName);
+    final snakeName = StringUtils.toSnakeCase(featureName);
+
+    // 1. Model
+    _writeFile(p.join(featurePath, 'models', '${snakeName}_model.dart'), '''
+class ${pascalName}Model {
+  final int id;
+  const ${pascalName}Model({required this.id});
+}
+''');
+
+    // 2. Provider
+    _generateStateManagementContent(
+        featurePath, featureName, config, packageName);
+
+    // 3. Pages
+    _generatePages(featurePath, featureName, config, packageName);
+
+    // 4. DI
+    _registerInDI(featureName, config, packageName);
+
+    // 5. Router
+    _registerInRouter(featureName, config, packageName);
+
+    // 6. Tests
+    if (config.tests) {
+      _generateFeatureTest(featureName, config, packageName);
+    }
+  }
+
+  static void _generatePages(String featurePath, String featureName,
+      GeneratorConfig config, String packageName) {
+    final pascalName = StringUtils.toPascalCase(featureName);
+    final snakeName = StringUtils.toSnakeCase(featureName);
     final isAutoRoute = config.routing == Routing.autoRoute;
     final autoRouteImport =
         isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : '';
     final routeAnnotation = isAutoRoute ? '@RoutePage()\n' : '';
 
+    final pageDir = config.getPagesDirectory();
+    final fullPagePath = p.join(featurePath, pageDir);
+
     if (featureName == 'auth') {
       _generateAuthPages(featurePath, config, packageName);
     } else {
-      _writeFile(
-          p.join(
-              featurePath, 'presentation', 'pages', '${snakeName}_page.dart'),
-          '''
+      _writeFile(p.join(fullPagePath, '${snakeName}_page.dart'), '''
 import 'package:flutter/material.dart';
 $autoRouteImport
 $routeAnnotation
@@ -178,17 +477,6 @@ class ${pascalName}Page extends StatelessWidget {
 }
 ''');
     }
-
-    // 9. DI Registration
-    _registerInDI(featureName, config, packageName);
-
-    // 10. Router Registration
-    _registerInRouter(featureName, config, packageName);
-
-    // 11. Feature Tests
-    if (config.tests) {
-      _generateFeatureTest(featureName, config, packageName);
-    }
   }
 
   static void _generateFeatureTest(
@@ -197,7 +485,8 @@ class ${pascalName}Page extends StatelessWidget {
     final snakeName = StringUtils.toSnakeCase(name);
     final testPath = p.join('test', 'features', snakeName);
 
-    _writeFile(p.join(testPath, '${snakeName}_repository_test.dart'), '''
+    if (config.architecture == Architecture.clean) {
+      _writeFile(p.join(testPath, '${snakeName}_repository_test.dart'), '''
 import 'package:flutter_test/flutter_test.dart';
 import 'package:$packageName/features/$snakeName/data/repositories/${snakeName}_repository_impl.dart';
 import 'package:$packageName/features/$snakeName/data/datasources/${snakeName}_remote_datasource.dart';
@@ -226,6 +515,98 @@ void main() {
   });
 }
 ''');
+    } else if (config.architecture == Architecture.mvvm) {
+      _writeFile(p.join(testPath, '${snakeName}_view_model_test.dart'), '''
+import 'package:flutter_test/flutter_test.dart';
+import 'package:$packageName/features/$snakeName/view_models/${snakeName}_view_model.dart';
+import 'package:$packageName/features/$snakeName/services/${snakeName}_service.dart';
+import 'package:$packageName/features/$snakeName/models/${snakeName}_model.dart';
+
+class Mock${pascalName}Service implements ${pascalName}Service {
+  @override
+  late final dynamic apiClient;
+  @override
+  Future<${pascalName}Model> fetch$pascalName() async {
+    return const ${pascalName}Model(id: 1);
+  }
+}
+
+void main() {
+  late ${pascalName}ViewModel viewModel;
+  late Mock${pascalName}Service mockService;
+
+  setUp(() {
+    mockService = Mock${pascalName}Service();
+    viewModel = ${pascalName}ViewModel(mockService);
+  });
+
+  test('initial values are correct', () {
+    expect(viewModel.isLoading, false);
+    expect(viewModel.data, null);
+  });
+}
+''');
+    } else if (config.architecture == Architecture.bloc) {
+      _writeFile(p.join(testPath, '${snakeName}_bloc_test.dart'), '''
+import 'package:flutter_test/flutter_test.dart';
+import 'package:$packageName/features/$snakeName/bloc/${snakeName}_bloc.dart';
+import 'package:$packageName/features/$snakeName/repositories/${snakeName}_repository.dart';
+
+class Mock${pascalName}Repository implements ${pascalName}Repository {
+  @override
+  late final dynamic apiClient;
+  @override
+  Future<dynamic> getData() async {
+    return null;
+  }
+}
+
+void main() {
+  test('Initial state should be ${pascalName}Initial', () {
+    final mockRepo = Mock${pascalName}Repository();
+    expect(${pascalName}Bloc(mockRepo).state, ${pascalName}Initial());
+  });
+}
+''');
+    } else if (config.architecture == Architecture.getx) {
+      _writeFile(p.join(testPath, '${snakeName}_controller_test.dart'), '''
+import 'package:flutter_test/flutter_test.dart';
+import 'package:$packageName/features/$snakeName/controllers/${snakeName}_controller.dart';
+
+void main() {
+  late ${pascalName}Controller controller;
+
+  setUp(() {
+    controller = ${pascalName}Controller();
+  });
+
+  test('initial loading state should be false', () {
+    expect(controller.isLoading.value, false);
+  });
+
+  test('data should be initially null', () {
+    expect(controller.data.value, null);
+  });
+}
+''');
+    } else if (config.architecture == Architecture.provider) {
+      _writeFile(p.join(testPath, '${snakeName}_provider_test.dart'), '''
+import 'package:flutter_test/flutter_test.dart';
+import 'package:$packageName/features/$snakeName/providers/${snakeName}_provider.dart';
+
+void main() {
+  late ${pascalName}Provider provider;
+
+  setUp(() {
+    provider = ${pascalName}Provider();
+  });
+
+  test('initial loading state should be false', () {
+    expect(provider.isLoading, false);
+  });
+}
+''');
+    }
   }
 
   static void _writeFile(String path, String content) {
@@ -240,34 +621,45 @@ void main() {
       String name, GeneratorConfig config, String packageName) {
     if (config.routing == Routing.navigator) return;
 
-    if (config.routing == Routing.autoRoute) {
-      _registerInAutoRoute(name, packageName);
-      return;
-    }
-
     final routerFile = File(p.join('lib', 'routes', 'app_router.dart'));
     if (!routerFile.existsSync()) return;
 
     final pascalName = StringUtils.toPascalCase(name);
     final snakeName = StringUtils.toSnakeCase(name);
-    final pageClass = '${pascalName}Page';
-    final pagePath =
-        'package:$packageName/features/$snakeName/presentation/pages/';
-    final import = "import '$pagePath${snakeName}_page.dart';";
+    final pageDir = config.getPagesDirectory();
+    final importPath = 'package:$packageName/features/$snakeName/$pageDir/';
 
     if (name == 'auth') {
-      // Auth has login and register
-      final loginImport = "import '${pagePath}login_page.dart';";
-      final registerImport = "import '${pagePath}register_page.dart';";
       String contents = routerFile.readAsStringSync();
-      if (!contents.contains(loginImport)) {
-        contents = '$loginImport\n$contents';
-      }
-      if (!contents.contains(registerImport)) {
-        contents = '$registerImport\n$contents';
-      }
+      if (config.routing == Routing.autoRoute) {
+        final loginImport = "import '$importPath" "login_page.dart';";
+        final registerImport = "import '$importPath" "register_page.dart';";
+        if (!contents.contains(loginImport)) {
+          contents = '$loginImport\n$contents';
+        }
+        if (!contents.contains(registerImport)) {
+          contents = '$registerImport\n$contents';
+        }
 
-      final routes = '''
+        final loginRoute =
+            '      AutoRoute(page: LoginRoute.page, initial: true),\n';
+        final registerRoute = '      AutoRoute(page: RegisterRoute.page),\n';
+
+        if (!contents.contains('LoginRoute.page')) {
+          contents = contents.replaceFirst('List<AutoRoute> get routes => [',
+              'List<AutoRoute> get routes => [\n$loginRoute$registerRoute');
+        }
+      } else {
+        final loginImport = "import '$importPath" "login_page.dart';";
+        final registerImport = "import '$importPath" "register_page.dart';";
+        if (!contents.contains(loginImport)) {
+          contents = '$loginImport\n$contents';
+        }
+        if (!contents.contains(registerImport)) {
+          contents = '$registerImport\n$contents';
+        }
+
+        final routes = '''
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginPage(),
@@ -277,62 +669,17 @@ void main() {
       builder: (context, state) => const RegisterPage(),
     ),
 ''';
-      if (!contents.contains("path: '/login'")) {
-        contents = contents.replaceFirst('routes: [', 'routes: [\n$routes');
+        if (!contents.contains("path: '/login'")) {
+          contents = contents.replaceFirst('routes: [', 'routes: [\n$routes');
+        }
       }
       routerFile.writeAsStringSync(contents);
-    } else {
-      String contents = routerFile.readAsStringSync();
-      if (!contents.contains(import)) {
-        contents = '$import\n$contents';
-      }
-
-      final route = '''
-    GoRoute(
-      path: '/$snakeName',
-      builder: (context, state) => const $pageClass(),
-    ),
-''';
-      if (!contents.contains("path: '/$snakeName'")) {
-        contents = contents.replaceFirst('routes: [', 'routes: [\n$route');
-      }
-      routerFile.writeAsStringSync(contents);
+      return;
     }
-  }
 
-  static void _registerInAutoRoute(String name, String packageName) {
-    final routerFile = File(p.join('lib', 'routes', 'app_router.dart'));
-    if (!routerFile.existsSync()) return;
-
-    final pascalName = StringUtils.toPascalCase(name);
-    final snakeName = StringUtils.toSnakeCase(name);
-
-    if (name == 'auth') {
-      // Auth has login and register pages
-      final loginImport =
-          "import 'package:$packageName/features/$snakeName/presentation/pages/login_page.dart';";
-      final registerImport =
-          "import 'package:$packageName/features/$snakeName/presentation/pages/register_page.dart';";
+    if (config.routing == Routing.autoRoute) {
       String contents = routerFile.readAsStringSync();
-      if (!contents.contains(loginImport)) {
-        contents = '$loginImport\n$contents';
-      }
-      if (!contents.contains(registerImport)) {
-        contents = '$registerImport\n$contents';
-      }
-      final routes = '''
-      AutoRoute(page: LoginRoute.page),
-      AutoRoute(page: RegisterRoute.page),
-''';
-      if (!contents.contains('LoginRoute.page')) {
-        contents = contents.replaceFirst('List<AutoRoute> get routes => [',
-            'List<AutoRoute> get routes => [\n$routes');
-      }
-      routerFile.writeAsStringSync(contents);
-    } else {
-      final pageImport =
-          "import 'package:$packageName/features/$snakeName/presentation/pages/${snakeName}_page.dart';";
-      String contents = routerFile.readAsStringSync();
+      final pageImport = "import '$importPath${snakeName}_page.dart';";
       if (!contents.contains(pageImport)) {
         contents = '$pageImport\n$contents';
       }
@@ -340,6 +687,23 @@ void main() {
       if (!contents.contains('${pascalName}Route.page')) {
         contents = contents.replaceFirst('List<AutoRoute> get routes => [',
             'List<AutoRoute> get routes => [\n$route');
+      }
+      routerFile.writeAsStringSync(contents);
+    } else {
+      String contents = routerFile.readAsStringSync();
+      final pageImport = "import '$importPath${snakeName}_page.dart';";
+      if (!contents.contains(pageImport)) {
+        contents = '$pageImport\n$contents';
+      }
+
+      final route = '''
+    GoRoute(
+      path: '/$snakeName',
+      builder: (context, state) => const ${pascalName}Page(),
+    ),
+''';
+      if (!contents.contains("path: '/$snakeName'")) {
+        contents = contents.replaceFirst('routes: [', 'routes: [\n$route');
       }
       routerFile.writeAsStringSync(contents);
     }
@@ -350,27 +714,63 @@ void main() {
     final pascalName = StringUtils.toPascalCase(name);
     final snakeName = StringUtils.toSnakeCase(name);
     final camelName = StringUtils.toCamelCase(name);
-    final smPath = p.join(path, 'presentation', config.stateManagement.name);
+
+    String smPath;
+
+    switch (config.architecture) {
+      case Architecture.clean:
+        smPath = p.join(path, 'presentation', config.stateManagement.name);
+        break;
+      case Architecture.mvvm:
+        smPath = p.join(path, 'view_models');
+        break;
+      case Architecture.bloc:
+        smPath = p.join(path, 'bloc');
+        break;
+      case Architecture.getx:
+        smPath = p.join(path, 'controllers');
+        break;
+      case Architecture.provider:
+        smPath = p.join(path, 'providers');
+        break;
+    }
 
     switch (config.stateManagement) {
       case StateManagement.bloc:
+        String blocImport;
+        String depType;
+        String depField;
+        String usageLine;
+        if (config.architecture == Architecture.clean) {
+          blocImport =
+              "import 'package:$packageName/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart';";
+          depType = 'Get${pascalName}UseCase';
+          depField = 'get${pascalName}UseCase';
+          usageLine =
+              'final data = await $depField();\n        emit(${pascalName}Loaded(data: data.id.toString()));';
+        } else {
+          blocImport =
+              "import 'package:$packageName/features/$snakeName/repositories/${snakeName}_repository.dart';";
+          depType = '${pascalName}Repository';
+          depField = 'repository';
+          usageLine =
+              'final data = await $depField.getData();\n        emit(${pascalName}Loaded(data: data.toString()));';
+        }
         _writeFile(p.join(smPath, '${snakeName}_bloc.dart'), '''
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:$packageName/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart';
+$blocImport
 
 part '${snakeName}_event.dart';
 part '${snakeName}_state.dart';
 
 class ${pascalName}Bloc extends Bloc<${pascalName}Event, ${pascalName}State> {
-  final Get${pascalName}UseCase get${pascalName}UseCase;
-
-  ${pascalName}Bloc({required this.get${pascalName}UseCase}) : super(${pascalName}Initial()) {
+  final $depType $depField;
+  ${pascalName}Bloc(this.$depField) : super(${pascalName}Initial()) {
     on<Get${pascalName}DataEvent>((event, emit) async {
       emit(${pascalName}Loading());
       try {
-        final data = await get${pascalName}UseCase();
-        emit(${pascalName}Loaded(data: data.id.toString()));
+        $usageLine
       } catch (e) {
         emit(${pascalName}Error(message: e.toString()));
       }
@@ -415,25 +815,15 @@ class ${pascalName}Error extends ${pascalName}State {
       case StateManagement.riverpod:
         _writeFile(p.join(smPath, '${snakeName}_provider.dart'), '''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:$packageName/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart';
-import 'package:$packageName/di/injection_container.dart';
 
-final ${camelName}Provider = FutureProvider((ref) async {
-  final usecase = sl<Get${pascalName}UseCase>();
-  return await usecase();
-});
+final ${camelName}Provider = StateProvider<String>((ref) => 'Initial Data');
 ''');
         break;
       case StateManagement.provider:
         _writeFile(p.join(smPath, '${snakeName}_provider.dart'), '''
 import 'package:flutter/material.dart';
-import 'package:$packageName/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart';
 
 class ${pascalName}Provider extends ChangeNotifier {
-  final Get${pascalName}UseCase get${pascalName}UseCase;
-
-  ${pascalName}Provider({required this.get${pascalName}UseCase});
-
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -450,19 +840,24 @@ class ${pascalName}Provider extends ChangeNotifier {
       case StateManagement.getx:
         _writeFile(p.join(smPath, '${snakeName}_controller.dart'), '''
 import 'package:get/get.dart';
-import 'package:$packageName/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart';
 
 class ${pascalName}Controller extends GetxController {
-  final Get${pascalName}UseCase get${pascalName}UseCase;
-
-  ${pascalName}Controller({required this.get${pascalName}UseCase});
-
   final isLoading = false.obs;
-  
+  final data = Rxn<String>();
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
+
   Future<void> fetchData() async {
     isLoading.value = true;
-    // Implementation
-    isLoading.value = false;
+    _errorMessage = null;
+    try {
+      // Implementation — fetch from API
+      data.value = 'Sample Data';
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
   }
 }
 ''');
@@ -477,7 +872,9 @@ class ${pascalName}Controller extends GetxController {
         isAutoRoute ? "import 'package:auto_route/auto_route.dart';\n" : '';
     final routeAnnotation = isAutoRoute ? '@RoutePage()\n' : '';
 
-    _writeFile(p.join(path, 'presentation', 'pages', 'login_page.dart'), '''
+    final pageDir = config.getPagesDirectory();
+
+    _writeFile(p.join(path, pageDir, 'login_page.dart'), '''
 import 'package:flutter/material.dart';
 $autoRouteImport
 $routeAnnotation
@@ -550,7 +947,7 @@ class LoginPage extends StatelessWidget {
 }
 ''');
 
-    _writeFile(p.join(path, 'presentation', 'pages', 'register_page.dart'), '''
+    _writeFile(p.join(path, pageDir, 'register_page.dart'), '''
 import 'package:flutter/material.dart';
 $autoRouteImport
 $routeAnnotation
@@ -578,28 +975,63 @@ class RegisterPage extends StatelessWidget {
 
     String contents = diFile.readAsStringSync();
 
-    // Add imports
-    final imports = [
-      "import 'package:$packageName/features/$snakeName/domain/repositories/${snakeName}_repository.dart';",
-      "import 'package:$packageName/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart';",
-      "import 'package:$packageName/features/$snakeName/data/datasources/${snakeName}_remote_datasource.dart';",
-      "import 'package:$packageName/features/$snakeName/data/repositories/${snakeName}_repository_impl.dart';",
-    ];
+    final imports = <String>[];
+    String registration = '';
 
-    switch (config.stateManagement) {
-      case StateManagement.bloc:
-        imports.add(
-            "import 'package:$packageName/features/$snakeName/presentation/bloc/${snakeName}_bloc.dart';");
+    switch (config.architecture) {
+      case Architecture.clean:
+        imports.addAll([
+          "import 'package:$packageName/features/$snakeName/domain/repositories/${snakeName}_repository.dart';",
+          "import 'package:$packageName/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart';",
+          "import 'package:$packageName/features/$snakeName/data/datasources/${snakeName}_remote_datasource.dart';",
+          "import 'package:$packageName/features/$snakeName/data/repositories/${snakeName}_repository_impl.dart';",
+        ]);
+        registration = '''
+  // $pascalName Feature
+  sl.registerLazySingleton<I${pascalName}RemoteDataSource>(() => ${pascalName}RemoteDataSourceImpl(sl()));
+  sl.registerLazySingleton<I${pascalName}Repository>(() => ${pascalName}RepositoryImpl(sl()));
+  sl.registerLazySingleton(() => Get${pascalName}UseCase(sl()));
+''';
         break;
-      case StateManagement.provider:
-        imports.add(
-            "import 'package:$packageName/features/$snakeName/presentation/provider/${snakeName}_provider.dart';");
+      case Architecture.mvvm:
+        imports.addAll([
+          "import 'package:$packageName/features/$snakeName/services/${snakeName}_service.dart';",
+          "import 'package:$packageName/features/$snakeName/view_models/${snakeName}_view_model.dart';",
+        ]);
+        registration = '''
+  // $pascalName Feature (MVVM)
+  sl.registerLazySingleton(() => ${pascalName}Service(sl()));
+  sl.registerFactory(() => ${pascalName}ViewModel(sl()));
+''';
         break;
-      case StateManagement.getx:
-        imports.add(
-            "import 'package:$packageName/features/$snakeName/presentation/getx/${snakeName}_controller.dart';");
+      case Architecture.bloc:
+        imports.addAll([
+          "import 'package:$packageName/features/$snakeName/repositories/${snakeName}_repository.dart';",
+          "import 'package:$packageName/features/$snakeName/bloc/${snakeName}_bloc.dart';",
+        ]);
+        registration = '''
+  // $pascalName Feature (BLoC)
+  sl.registerLazySingleton(() => ${pascalName}Repository(sl()));
+  sl.registerFactory(() => ${pascalName}Bloc(sl()));
+''';
         break;
-      default:
+      case Architecture.getx:
+        imports.addAll([
+          "import 'package:$packageName/features/$snakeName/controllers/${snakeName}_controller.dart';",
+        ]);
+        registration = '''
+  // $pascalName Feature (GetX)
+  sl.registerFactory(() => ${pascalName}Controller());
+''';
+        break;
+      case Architecture.provider:
+        imports.addAll([
+          "import 'package:$packageName/features/$snakeName/providers/${snakeName}_provider.dart';",
+        ]);
+        registration = '''
+  // $pascalName Feature (Provider)
+  sl.registerFactory(() => ${pascalName}Provider());
+''';
         break;
     }
 
@@ -609,36 +1041,9 @@ class RegisterPage extends StatelessWidget {
       }
     }
 
-    // Add registrations
-    final registrations = '''
-  // $pascalName Feature
-  sl.registerLazySingleton<I${pascalName}RemoteDataSource>(() => ${pascalName}RemoteDataSourceImpl(sl()));
-  sl.registerLazySingleton<I${pascalName}Repository>(() => ${pascalName}RepositoryImpl(sl()));
-  sl.registerLazySingleton(() => Get${pascalName}UseCase(sl()));
-''';
-
-    String logicReg = '';
-    switch (config.stateManagement) {
-      case StateManagement.bloc:
-        logicReg =
-            '  sl.registerFactory(() => ${pascalName}Bloc(get${pascalName}UseCase: sl()));\n';
-        break;
-      case StateManagement.provider:
-        logicReg =
-            '  sl.registerFactory(() => ${pascalName}Provider(get${pascalName}UseCase: sl()));\n';
-        break;
-      case StateManagement.getx:
-        logicReg =
-            '  sl.registerFactory(() => ${pascalName}Controller(get${pascalName}UseCase: sl()));\n';
-        break;
-      default:
-        break;
-    }
-
-    final fullReg = registrations + logicReg;
-
     if (!contents.contains('// $pascalName Feature')) {
-      contents = contents.replaceFirst('// Features', '// Features\n$fullReg');
+      contents =
+          contents.replaceFirst('// Features', '// Features\n$registration');
     }
 
     diFile.writeAsStringSync(contents);

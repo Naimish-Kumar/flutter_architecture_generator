@@ -7,7 +7,6 @@ import '../utils/feature_helper.dart';
 import '../utils/pubspec_helper.dart';
 
 class GenerateArchCommand extends Command<int> {
-
   GenerateArchCommand({required Logger logger}) : _logger = logger;
   final Logger _logger;
 
@@ -24,10 +23,38 @@ class GenerateArchCommand extends Command<int> {
         .info('🚀 Initializing Flutter Architecture for package: $packageName');
 
     // Interactive setup
+    final architecture = _logger.chooseOne(
+      'Select architecture:',
+      choices: [
+        'Clean Architecture (Feature-First)',
+        'MVVM',
+        'BLoC Architecture',
+        'GetX Architecture',
+        'Provider / Simple Architecture',
+      ],
+      defaultValue: 'Clean Architecture (Feature-First)',
+    );
+
+    final archEnum = architecture == 'Clean Architecture (Feature-First)'
+        ? Architecture.clean
+        : architecture == 'MVVM'
+            ? Architecture.mvvm
+            : architecture == 'BLoC Architecture'
+                ? Architecture.bloc
+                : architecture == 'GetX Architecture'
+                    ? Architecture.getx
+                    : Architecture.provider;
+
     final stateManagement = _logger.chooseOne(
       'Select state management:',
       choices: StateManagement.values.map((e) => e.name).toList(),
-      defaultValue: StateManagement.bloc.name,
+      defaultValue: archEnum == Architecture.bloc
+          ? StateManagement.bloc.name
+          : archEnum == Architecture.getx
+              ? StateManagement.getx.name
+              : archEnum == Architecture.provider
+                  ? StateManagement.provider.name
+                  : StateManagement.bloc.name,
     );
 
     final routing = _logger.chooseOne(
@@ -42,6 +69,7 @@ class GenerateArchCommand extends Command<int> {
     final tests = _logger.confirm('Enable tests?', defaultValue: true);
 
     final config = GeneratorConfig(
+      architecture: archEnum,
       stateManagement:
           StateManagement.values.firstWhere((e) => e.name == stateManagement),
       routing: Routing.values.firstWhere((e) => e.name == routing),

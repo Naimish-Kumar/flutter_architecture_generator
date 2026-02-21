@@ -43,24 +43,31 @@ void main() async {
   static String appContent(GeneratorConfig config, String packageName) {
     final useRouter = config.routing != Routing.navigator;
     final isRiverpod = config.stateManagement == StateManagement.riverpod;
+    final isGetX = config.stateManagement == StateManagement.getx;
 
-    final routerImport = useRouter
-        ? "import 'package:$packageName/routes/app_router.dart';"
-        : '';
+    final routerImport =
+        "import 'package:$packageName/routes/app_router.dart';";
     final themeImport =
         "import 'package:$packageName/core/theme/app_theme.dart';";
     final riverpodImport = isRiverpod
         ? "import 'package:flutter_riverpod/flutter_riverpod.dart';"
         : '';
+    final getxImport = isGetX ? "import 'package:get/get.dart';" : '';
     final l10nImport = config.localization
         ? "import 'package:flutter_localizations/flutter_localizations.dart';"
         : '';
 
-    final homeProp = useRouter
-        ? 'routerConfig: router,'
-        : "home: const Scaffold(body: Center(child: Text('Welcome'))),";
-
     final isAutoRoute = config.routing == Routing.autoRoute;
+
+    String homeProp;
+    if (isAutoRoute) {
+      homeProp = 'routerConfig: _appRouter.config(),';
+    } else if (config.routing == Routing.goRouter) {
+      homeProp = 'routerConfig: router,';
+    } else {
+      homeProp =
+          'initialRoute: AppRoutes.home,\n      onGenerateRoute: AppRoutes.onGenerateRoute,';
+    }
 
     final l10nConfig = config.localization
         ? '''
@@ -74,15 +81,17 @@ void main() async {
       ],'''
         : '';
 
+    final appClass = isGetX ? 'GetMaterialApp' : 'MaterialApp';
+
     var materialApp = '''
-    MaterialApp${useRouter ? '.router' : ''}(
-      title: 'Flutter Clean Architecture',
+    $appClass${useRouter ? '.router' : ''}(
+      title: 'Flutter ${config.architecture.displayName}',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
       $l10nConfig
-      ${isAutoRoute ? 'routerConfig: _appRouter.config(),' : homeProp}
+      $homeProp
     )''';
 
     if (isRiverpod) {
@@ -95,6 +104,7 @@ void main() async {
     return '''
 import 'package:flutter/material.dart';
 $riverpodImport
+$getxImport
 $routerImport
 $themeImport
 $l10nImport
@@ -218,11 +228,11 @@ output-localization-file: app_localizations.dart
 ''';
   }
 
-  static String arbContent() {
+  static String arbContent(GeneratorConfig config) {
     return '''
 {
   "@@locale": "en",
-  "appTitle": "Flutter Clean Arch",
+  "appTitle": "Flutter ${config.architecture.displayName}",
   "@appTitle": {
     "description": "The title of the application"
   }
@@ -273,13 +283,39 @@ final router = GoRouter(
 );
 ''';
     }
-    return '// Navigator 2.0 configuration';
+    return '''
+import 'package:flutter/material.dart';
+
+class AppRoutes {
+  static const String home = '/';
+  static const String login = '/login';
+  static const String register = '/register';
+
+  static Map<String, WidgetBuilder> get routes => {
+    home: (context) => const Scaffold(
+      body: Center(child: Text('Home')),
+    ),
+  };
+
+  static Route<dynamic> onGenerateRoute(RouteSettings settings) {
+    final builder = routes[settings.name];
+    if (builder != null) {
+      return MaterialPageRoute(builder: builder, settings: settings);
+    }
+    return MaterialPageRoute(
+      builder: (context) => const Scaffold(
+        body: Center(child: Text('Page not found')),
+      ),
+    );
+  }
+}
+''';
   }
 
-  static String constantsContent() {
+  static String constantsContent(GeneratorConfig config) {
     return '''
 class AppConstants {
-  static const String appName = 'Flutter Clean Architecture';
+  static const String appName = 'Flutter ${config.architecture.displayName}';
 }
 ''';
   }

@@ -9,7 +9,6 @@ import '../utils/string_utils.dart';
 import '../models/generator_config.dart';
 
 class GeneratePageCommand extends Command<int> {
-
   GeneratePageCommand({required Logger logger}) : _logger = logger {
     argParser.addOption('feature',
         abbr: 'f', help: 'Target feature for the page');
@@ -67,10 +66,11 @@ class ${className}Page extends StatelessWidget {
 }
 ''';
 
+      final pageDir = config?.getPagesDirectory() ?? 'presentation/pages';
       final targetPath = featureName != null
-          ? p.join('lib', 'features', StringUtils.toSnakeCase(featureName),
-              'presentation', 'pages')
-          : p.join('lib', 'presentation', 'pages');
+          ? p.join(
+              'lib', 'features', StringUtils.toSnakeCase(featureName), pageDir)
+          : p.join('lib', pageDir);
 
       final file = File(
           p.join(Directory.current.path, targetPath, '${fileName}_page.dart'));

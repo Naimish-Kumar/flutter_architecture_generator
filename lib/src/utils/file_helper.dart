@@ -48,7 +48,8 @@ class FileHelper {
       'lib/core/network/api_client.dart': BaseTemplates.apiClientContent(),
       'lib/core/errors/failures.dart': BaseTemplates.errorContent(),
       'lib/core/theme/app_theme.dart': BaseTemplates.themeContent(),
-      'lib/core/constants/app_constants.dart': BaseTemplates.constantsContent(),
+      'lib/core/constants/app_constants.dart':
+          BaseTemplates.constantsContent(config),
       'lib/routes/app_router.dart': BaseTemplates.routerContent(config),
       '.env.dev': 'API_BASE_URL=https://dev.api.example.com',
       '.env.prod': 'API_BASE_URL=https://api.example.com',
@@ -57,7 +58,7 @@ class FileHelper {
 
     if (config.localization) {
       files['l10n.yaml'] = BaseTemplates.l10nYamlContent();
-      files['lib/l10n/app_en.arb'] = BaseTemplates.arbContent();
+      files['lib/l10n/app_en.arb'] = BaseTemplates.arbContent(config);
     }
 
     if (config.tests) {

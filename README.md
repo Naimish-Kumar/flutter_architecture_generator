@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Dart 3](https://img.shields.io/badge/Dart-3-blue.svg)](https://dart.dev)
 
-> **A powerful, production-ready CLI tool to instantly scaffold professional Flutter applications following Clean Architecture principles.**
+> **A powerful, production-ready CLI tool to instantly scaffold professional Flutter applications with your choice of architecture — Clean Architecture, MVVM, BLoC, GetX, or Provider.**
 
 Stop wasting hours on boilerplate. Generate a complete, scalable project architecture in **seconds** — with dependency injection, networking, routing, state management, theming, and tests all wired up and ready to go.
 
@@ -15,8 +15,8 @@ Stop wasting hours on boilerplate. Generate a complete, scalable project archite
 | | Feature |
 |---|---------|
 | 🚀 | **Zero to Production** — Generates a complete architecture with DI, Networking, Routing, and Material 3 Theming in seconds |
-| 🧱 | **Clean Architecture** — Strictly follows Domain → Data → Presentation separation |
-| 🧠 | **Context-Aware** — Remembers your project config (state management, routing) so subsequent commands "just work" |
+| 🧱 | **5 Architectures** — Clean Architecture, MVVM, BLoC, GetX, and Provider — each with idiomatic directory structures |
+| 🧠 | **Context-Aware** — Remembers your project config (architecture, state management, routing) so subsequent commands "just work" |
 | ⚡ | **Auto-Wiring** — New features auto-register in your DI container and router — no manual wiring |
 | 🎨 | **Premium Auth UI** — Includes polished Login & Register pages out of the box |
 | 📦 | **Latest Packages** — All dependencies pinned to the most recent stable versions on pub.dev |
@@ -45,6 +45,15 @@ Stop wasting hours on boilerplate. Generate a complete, scalable project archite
 
 ## 🎯 Supported Features
 
+### Architectures
+| Architecture | Generated Structure | Key Components |
+|---|---|---|
+| **Clean Architecture** | `domain/` → `data/` → `presentation/` | Entity, Repository Interface, UseCase, DataSource, Repo Impl, BLoC/Provider |
+| **MVVM** | `models/` → `services/` → `view_models/` → `views/` | Model, Service, ViewModel (ChangeNotifier), View |
+| **BLoC Architecture** | `models/` → `repositories/` → `bloc/` → `pages/` | Model, Repository, Bloc + Event + State, Page |
+| **GetX Architecture** | `models/` → `controllers/` → `bindings/` → `views/` | Model, Controller (GetxController), Binding, View |
+| **Provider / Simple** | `models/` → `providers/` → `pages/` | Model, Provider (ChangeNotifier), Page |
+
 ### State Management
 | Option | Generated Code |
 |--------|---------------|
@@ -58,7 +67,7 @@ Stop wasting hours on boilerplate. Generate a complete, scalable project archite
 |--------|---------------|
 | **GoRouter** | `GoRouter` config with `GoRoute` entries, auto-registration of new pages |
 | **AutoRoute** | `@AutoRouterConfig` with `@RoutePage()` annotations, auto-registration |
-| **Navigator** | Basic Navigator 2.0 placeholder |
+| **Navigator** | `onGenerateRoute` with named route constants and 404 fallback |
 
 ### Networking & Data
 | Feature | Details |
@@ -142,6 +151,13 @@ flutter_arch_gen init
 
 You'll be prompted to choose:
 ```
+? Select architecture: (Use arrow keys)
+❯ Clean Architecture (Feature-First)
+  MVVM
+  BLoC Architecture
+  GetX Architecture
+  Provider / Simple Architecture
+
 ? Select state management: (Use arrow keys)
 ❯ bloc
   riverpod
@@ -241,6 +257,62 @@ features/user_profile/
 - ✅ Registers `DataSource`, `Repository`, `UseCase`, and `Bloc` in `injection_container.dart`
 - ✅ Adds route + import to `app_router.dart` (GoRouter or AutoRoute)
 - ✅ Generates repository test in `test/features/user_profile/`
+
+<details>
+<summary><strong>📂 MVVM Architecture Structure</strong></summary>
+
+```
+features/user_profile/
+├── models/user_profile_model.dart
+├── services/user_profile_service.dart
+├── view_models/user_profile_view_model.dart
+└── views/
+    ├── pages/user_profile_page.dart
+    └── widgets/
+```
+</details>
+
+<details>
+<summary><strong>📂 BLoC Architecture Structure</strong></summary>
+
+```
+features/user_profile/
+├── bloc/
+│   ├── user_profile_bloc.dart
+│   ├── user_profile_event.dart
+│   └── user_profile_state.dart
+├── models/user_profile_model.dart
+├── repositories/user_profile_repository.dart
+├── pages/user_profile_page.dart
+└── widgets/
+```
+</details>
+
+<details>
+<summary><strong>📂 GetX Architecture Structure</strong></summary>
+
+```
+features/user_profile/
+├── bindings/user_profile_binding.dart
+├── controllers/user_profile_controller.dart
+├── models/user_profile_model.dart
+└── views/
+    ├── pages/user_profile_page.dart
+    └── widgets/
+```
+</details>
+
+<details>
+<summary><strong>📂 Provider Architecture Structure</strong></summary>
+
+```
+features/user_profile/
+├── models/user_profile_model.dart
+├── providers/user_profile_provider.dart
+├── pages/user_profile_page.dart
+└── widgets/
+```
+</details>
 
 ---
 
@@ -475,6 +547,7 @@ After running `init`, your choices are saved in `.flutter_arch_gen.json`:
 
 ```json
 {
+  "architecture": "clean",
   "stateManagement": "bloc",
   "routing": "goRouter",
   "localization": true,

@@ -6,7 +6,6 @@ import '../utils/file_helper.dart';
 import '../models/generator_config.dart';
 
 class GenerateFeatureCommand extends Command<int> {
-
   GenerateFeatureCommand({required Logger logger}) : _logger = logger {
     argParser.addOption('name', abbr: 'n', help: 'Name of the feature');
     argParser.addOption(
@@ -47,6 +46,7 @@ class GenerateFeatureCommand extends Command<int> {
     try {
       final config = savedConfig ??
           GeneratorConfig(
+            architecture: Architecture.clean,
             stateManagement: stateManagement,
             routing: Routing.goRouter, // Default
             localization: true,
@@ -57,7 +57,7 @@ class GenerateFeatureCommand extends Command<int> {
       await FeatureHelper.generateFeature(featureName,
           config: config, logger: _logger);
       progress.complete(
-          'Feature $featureName generated with Clean Architecture! ✅');
+          'Feature $featureName generated with ${config.architecture.displayName}! ✅');
       return ExitCode.success.code;
     } catch (e) {
       progress.fail('Failed to generate feature: $e');
