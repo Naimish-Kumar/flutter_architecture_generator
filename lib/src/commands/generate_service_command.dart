@@ -8,12 +8,12 @@ import '../utils/validation_utils.dart';
 import '../utils/template_loader.dart';
 import '../generators/base_generator.dart';
 
-/// The `model` command — generates a Freezed model file.
-class GenerateModelCommand extends Command<int> {
-  /// Creates a [GenerateModelCommand].
-  GenerateModelCommand({required Logger logger}) : _logger = logger {
+/// The `service` command — generates a new Service.
+class GenerateServiceCommand extends Command<int> {
+  /// Creates a [GenerateServiceCommand].
+  GenerateServiceCommand({required Logger logger}) : _logger = logger {
     argParser.addOption('feature',
-        abbr: 'f', help: 'Target feature for the model');
+        abbr: 'f', help: 'Target feature for the service');
     argParser.addOption('output', abbr: 'o', help: 'Custom output directory');
     argParser.addOption('config',
         abbr: 'c', help: 'Configuration profile name');
@@ -24,21 +24,22 @@ class GenerateModelCommand extends Command<int> {
   final Logger _logger;
 
   @override
-  String get name => 'model';
+  String get name => 'service';
 
   @override
-  String get description => 'Generate a new Freezed model.';
+  String get description => 'Generate a new feature service.';
 
   @override
   Future<int> run() async {
-    final modelName =
+    final serviceName =
         argResults?.rest.isNotEmpty == true ? argResults?.rest.first : null;
-    if (modelName == null) {
-      _logger.err('Please provide a model name.');
+    if (serviceName == null) {
+      _logger.err('Please provide a service name.');
       return ExitCode.usage.code;
     }
 
-    final validationError = ValidationUtils.validateName(modelName, 'Model');
+    final validationError =
+        ValidationUtils.validateName(serviceName, 'Service');
     if (validationError != null) {
       _logger.err(validationError);
       return ExitCode.usage.code;
@@ -54,40 +55,34 @@ class GenerateModelCommand extends Command<int> {
 
     BaseGenerator.beginTracking();
 
-    final fileName = StringUtils.toSnakeCase(modelName);
-    final className = StringUtils.toPascalCase(modelName);
+    final fileName = StringUtils.toSnakeCase(serviceName);
+    final className = StringUtils.toPascalCase(serviceName);
 
     final content = TemplateLoader.load(
-      'model',
+      'service',
       defaultContent: '''
-import 'package:freezed_annotation/freezed_annotation.dart';
+class ${className}Service {
+  ${className}Service();
 
-part '$fileName.freezed.dart';
-part '$fileName.g.dart';
-
-@freezed
-class $className with _\$$className {
-  const factory $className({
-    required int id,
-  }) = _$className;
-
-  factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);
+  Future<void> performAction() async {
+    // TODO: Implement service logic
+  }
 }
 ''',
       replacements: {
         '{{className}}': className,
-        '{{fileName}}': fileName,
       },
       baseDir: baseDir,
     );
 
-    final modelDir = config?.getModelsDirectory() ?? 'data/models';
+    final serviceDir = config?.getServicesDirectory() ?? 'data/services';
     final targetPath = featureName != null
         ? p.join(baseDir, 'lib', 'features',
-            StringUtils.toSnakeCase(featureName), modelDir)
-        : p.join(baseDir, 'lib', 'core', 'models');
+            StringUtils.toSnakeCase(featureName), serviceDir)
+        : p.join(baseDir, 'lib', 'core', 'services');
 
-    BaseGenerator.writeFile(p.join(targetPath, '$fileName.dart'), content);
+    BaseGenerator.writeFile(
+        p.join(targetPath, '${fileName}_service.dart'), content);
 
     final actions = BaseGenerator.endTracking();
     FileHelper.renderPlan(actions, _logger, baseDir: baseDir);
@@ -98,12 +93,10 @@ class $className with _\$$className {
     }
 
     if (actions.isNotEmpty) {
-      final confirm = _logger.confirm('Generate model?', defaultValue: true);
+      final confirm = _logger.confirm('Generate service?', defaultValue: true);
       if (confirm) {
-        FileHelper.applyPlan(actions, command: 'model $modelName');
-        _logger.success('Model $className generated successfully! 🎉');
-        _logger.info(
-            '💡 Run `dart run build_runner build --delete-conflicting-outputs` to generate code.');
+        FileHelper.applyPlan(actions, command: 'service $serviceName');
+        _logger.success('Service $className generated successfully! 🎉');
       }
     }
 

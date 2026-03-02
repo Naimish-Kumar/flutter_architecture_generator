@@ -1,34 +1,52 @@
-## 1.1.0 - 2026-02-22
+## 1.1.1
 
-- 🏗️ **Multi-Architecture Support** — Added 4 new architectures alongside Clean Architecture:
-  - **MVVM**: Models, Services, ViewModels (ChangeNotifier), Views
-  - **BLoC Architecture**: Models, Repositories, Bloc + Event + State, Pages
-  - **GetX Architecture**: Models, Controllers (GetxController), Bindings, Views
-  - **Provider / Simple**: Models, Providers (ChangeNotifier), Pages
-- 🧭 **Navigator Routing** — Replaced placeholder with full `onGenerateRoute` implementation including named route constants and 404 fallback.
-- 🎯 **Typed BLoC Dependencies** — BLoC template now uses architecture-aware typed dependencies (`GetXUseCase` for Clean, `Repository` for BLoC).
-- 🧪 **Expanded Test Generation** — All 5 architectures now generate feature-specific tests (ViewModel, BLoC, Controller, Provider tests).
-- 🔗 **GetX Consistency** — Fixed controller/binding/DI alignment so constructor signatures match across all generated files.
-- 📝 **Updated README** — Added architecture comparison table, directory structure examples for all architectures, and architecture selection prompt in Quick Start guide.
-- ⚙️ **Architecture-Aware Commands** — `feature`, `model`, and `page` commands now respect the selected architecture's directory structure.
-- 🏷️ Updated package description to reflect multi-architecture support.
+### 🏗️ Major Refactoring & Transactional Engine
+- **Transactional Architecture**: Introduced a new `FileAction` system. Every command now follows a **Plan -> Confirm -> Execute** lifecycle.
+- **Undo / Rollback**: Added the `undo` command to revert the last 10 operations using a persistent history log.
+- **Modular Template System**: Users can now override default templates by placing `.template` files in `.flutter_arch_gen/templates/`.
+- **Refactored Core**: Split the monolithic `feature_helper.dart` into specialized modules (Generators, Registrars, Helpers).
 
-## 1.0.1 - 2026-02-21
+### ✨ New Commands
+- `api` — Generate Model + Repository + Service from an endpoint URL or spec.
+- `screen` — Generate pre-wired screens (List, Form, Detail) for a feature.
+- `widget` — Generate StatelessWidget or StatefulWidget.
+- `service` — Generate standalone Services.
+- `repository` — Generate standalone repository interfaces and implementations.
+- `bloc` — Generate standalone BLoCs or Cubits with events and states.
+- `delete` — Safely remove a feature and clean up its registrations.
+- `rename` — Rename an existing feature with full import/directory updates.
+- `migrate` — Switch architecture or state management mid-project.
+- `undo` — Revert the last destructive command.
 
-- ✨ Improved: `ApiClient` now uses environment variables (`flutter_dotenv`) for the base URL instead of a hardcoded string.
+### 🚀 Improvements & Features
+- **Dry Run Support**: Added `--dry-run` to all destructive commands to preview changes.
+- **Monorepo Support**: Added `--output` flag to target specific packages.
+- **Config Profiles**: Support for multiple configurations via `--config`.
+- **Enhanced Initialization**: `init` now supports dry-runs, overwrite protection, and automated template setup.
+- **Routing**: Added support for AutoRoute, GoRouter, and standard Navigator registration.
+- Fixed redundant imports and improved documentation across the entire package.
 
-## 1.0.0 - 2026-02-21
+### 🧪 Testing & Quality
+- Expanded test suite to 40+ tests covering versioning, config, and string utilities.
+- Resolved all lint and static analysis warnings for a 100% clean check.
 
-- 🏗️ Clean Architecture scaffolding with domain, data, and presentation layers.
-- ⚡ Four state management options: BLoC, Riverpod, Provider, and GetX.
-- 🗺️ Routing support: GoRouter and AutoRoute with auto-registration.
-- 🔌 Dependency Injection with GetIt — auto-wired for every feature.
-- 🌐 Dio HTTP client with interceptors, timeouts, and base configuration.
-- ❄️ Freezed & JSON Serializable model generation.
-- 🔐 Auth feature scaffolding with premium Login & Register pages.
-- 🌍 Localization (L10n) with ARB files and `flutter_localizations`.
-- 🔥 Firebase integration support (optional).
-- 🎨 Material 3 theming with light and dark mode.
-- 🔒 Environment files (.env.dev / .env.prod) with auto-generated .gitignore.
-- 🧪 Unit tests with repository test scaffolding.
-- 📦 Latest package versions from pub.dev.
+## 1.1.0
+
+- Multi-architecture support: Clean, MVVM, BLoC, GetX, Provider
+- State management: BLoC, Riverpod, Provider, GetX
+- Routing: GoRouter, AutoRoute
+- Firebase integration
+- Localization support
+- Custom feature generation
+
+## 1.0.2
+
+- Bug fixes and improvements
+
+## 1.0.1
+
+- Bug fixes and improvements
+
+## 1.0.0
+
+- Initial release

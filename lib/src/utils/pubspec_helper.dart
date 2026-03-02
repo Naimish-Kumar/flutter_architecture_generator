@@ -1,24 +1,53 @@
-// ignore_for_file: public_member_api_docs
+/// Pubspec.yaml helper utilities.
+///
+/// Reads and modifies the target Flutter project's `pubspec.yaml` file
+/// to add required dependencies and configuration.
+library;
+
 import 'dart:io';
 import 'package:yaml_edit/yaml_edit.dart';
+import 'package:path/path.dart' as p;
 import '../models/generator_config.dart';
+import '../generators/base_generator.dart';
 
+/// Provides utilities for reading and modifying `pubspec.yaml`.
 class PubspecHelper {
-  static String getPackageName() {
-    final file = File('pubspec.yaml');
-    if (!file.existsSync()) return 'flutter_project';
+  /// Returns the package name from `pubspec.yaml`.
+  ///
+  /// Throws a [StateError] if no `pubspec.yaml` is found in the current
+  /// directory, prompting the user to run the command from a Flutter project.
+  static String getPackageName({String? baseDir}) {
+    final path =
+        baseDir != null ? p.join(baseDir, 'pubspec.yaml') : 'pubspec.yaml';
+    final file = File(path);
+    if (!file.existsSync()) {
+      throw StateError(
+        'No pubspec.yaml found in the current directory.\n'
+        'Please run this command from the root of a Flutter project.',
+      );
+    }
     final contents = file.readAsStringSync();
     final editor = YamlEditor(contents);
     try {
       final node = editor.parseAt(['name']);
       return node.value as String;
     } catch (_) {
-      return 'flutter_project';
+      throw StateError(
+        'Could not read the package name from pubspec.yaml.\n'
+        'Ensure your pubspec.yaml has a valid "name" field.',
+      );
     }
   }
 
-  static Future<void> addDependencies(GeneratorConfig config) async {
-    final file = File('pubspec.yaml');
+  /// Adds the required dependencies to `pubspec.yaml` based on [config].
+  ///
+  /// If [forceUpdate] is true, existing dependency versions will be updated
+  /// to the latest bundled versions. Otherwise, existing deps are preserved.
+  static Future<void> addDependencies(GeneratorConfig config,
+      {bool forceUpdate = false, String? baseDir}) async {
+    final path =
+        baseDir != null ? p.join(baseDir, 'pubspec.yaml') : 'pubspec.yaml';
+    final file = File(path);
     if (!file.existsSync()) return;
 
     final contents = file.readAsStringSync();
@@ -36,6 +65,7 @@ class PubspecHelper {
     // State management dependencies
     switch (config.stateManagement) {
       case StateManagement.bloc:
+      case StateManagement.cubit:
         dependencies['flutter_bloc'] = '^9.1.1';
         dependencies['equatable'] = '^2.0.8';
         break;
@@ -58,7 +88,7 @@ class PubspecHelper {
       case Routing.autoRoute:
         dependencies['auto_route'] = '^11.1.0';
         break;
-      default:
+      case Routing.navigator:
         break;
     }
 
@@ -72,7 +102,7 @@ class PubspecHelper {
     }
 
     // Dev dependencies
-    final devDependencies = {
+    final devDependencies = <String, String>{
       'build_runner': '^2.11.1',
       'freezed': '^3.0.6',
       'json_serializable': '^6.13.0',
@@ -88,11 +118,13 @@ class PubspecHelper {
 
     // Apply changes
     for (var entry in dependencies.entries) {
-      _addDependency(editor, 'dependencies', entry.key, entry.value);
+      _addDependency(editor, 'dependencies', entry.key, entry.value,
+          forceUpdate: forceUpdate);
     }
 
     for (var entry in devDependencies.entries) {
-      _addDependency(editor, 'dev_dependencies', entry.key, entry.value);
+      _addDependency(editor, 'dev_dependencies', entry.key, entry.value,
+          forceUpdate: forceUpdate);
     }
 
     // Flutter section
@@ -109,14 +141,21 @@ class PubspecHelper {
     ];
     editor.update(['flutter', 'assets'], assets);
 
-    file.writeAsStringSync(editor.toString());
+    BaseGenerator.writeFile(path, editor.toString());
   }
 
+  /// Adds or updates a dependency in the given [section].
+  ///
+  /// If [forceUpdate] is true, existing versions are overwritten.
   static void _addDependency(
-      YamlEditor editor, String section, String name, dynamic version) {
+      YamlEditor editor, String section, String name, dynamic version,
+      {bool forceUpdate = false}) {
     try {
       editor.parseAt([section, name]);
-      // If no error, dependency already exists.
+      // Dependency already exists — update only if forced.
+      if (forceUpdate) {
+        editor.update([section, name], version);
+      }
     } catch (_) {
       editor.update([section, name], version);
     }

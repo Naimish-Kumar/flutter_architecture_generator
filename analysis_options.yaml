@@ -9,8 +9,20 @@ linter:
     - type_annotate_public_apis
     - unawaited_futures
     - unnecessary_await_in_return
+    - prefer_final_locals
+    - avoid_print
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - avoid_unused_constructor_parameters
+    - no_leading_underscores_for_local_identifiers
 
 analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+  errors:
+    missing_return: error
+    dead_code: warning
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"

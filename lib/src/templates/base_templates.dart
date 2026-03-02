@@ -1,7 +1,15 @@
-// ignore_for_file: public_member_api_docs
-import '../models/generator_config.dart';
+/// Base file templates for project initialization.
+///
+/// Contains template generators for core files created during `init`:
+/// main.dart, app.dart, DI container, API client, theme, router, etc.
+library;
 
+import '../models/generator_config.dart';
+import '../utils/template_loader.dart';
+
+/// Provides static template methods for generating base project files.
 class BaseTemplates {
+  /// Generates the content for `main.dart`.
   static String mainContent(GeneratorConfig config, String packageName) {
     final firebaseImport = config.firebase
         ? "import 'package:firebase_core/firebase_core.dart';\nimport 'firebase_options.dart';"
@@ -12,7 +20,9 @@ class BaseTemplates {
     final isAutoRoute = config.routing == Routing.autoRoute;
     final myAppConst = isAutoRoute ? '' : 'const ';
 
-    return '''
+    return TemplateLoader.load(
+      'main',
+      defaultContent: '''
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -37,9 +47,17 @@ void main() async {
   
   runApp(${myAppConst}MyApp());
 }
-''';
+''',
+      replacements: {
+        '{{packageName}}': packageName,
+        '{{firebaseImport}}': firebaseImport,
+        '{{firebaseInit}}': firebaseInit,
+        '{{myAppConst}}': myAppConst,
+      },
+    );
   }
 
+  /// Generates the content for `app.dart`.
   static String appContent(GeneratorConfig config, String packageName) {
     final useRouter = config.routing != Routing.navigator;
     final isRiverpod = config.stateManagement == StateManagement.riverpod;
@@ -85,7 +103,7 @@ void main() async {
 
     var materialApp = '''
     $appClass${useRouter ? '.router' : ''}(
-      title: 'Flutter ${config.architecture.displayName}',
+      title: 'Flutter \${config.architecture.displayName}',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -101,7 +119,9 @@ void main() async {
     final autoRouteField =
         isAutoRoute ? '\n  final _appRouter = AppRouter();' : '';
 
-    return '''
+    return TemplateLoader.load(
+      'app',
+      defaultContent: '''
 import 'package:flutter/material.dart';
 $riverpodImport
 $getxImport
@@ -110,7 +130,7 @@ $themeImport
 $l10nImport
 
 class MyApp extends StatelessWidget {
-  ${isAutoRoute ? '' : 'const '}MyApp({super.key});
+  \${isAutoRoute ? '' : 'const '}MyApp({super.key});
   $autoRouteField
 
   @override
@@ -118,11 +138,25 @@ class MyApp extends StatelessWidget {
     return $materialApp;
   }
 }
-''';
+''',
+      replacements: {
+        '{{packageName}}': packageName,
+        '{{riverpodImport}}': riverpodImport,
+        '{{getxImport}}': getxImport,
+        '{{routerImport}}': routerImport,
+        '{{themeImport}}': themeImport,
+        '{{l10nImport}}': l10nImport,
+        '{{autoRouteField}}': autoRouteField,
+        '{{materialApp}}': materialApp,
+      },
+    );
   }
 
+  /// Generates the content for `injection_container.dart`.
   static String diContent(GeneratorConfig config, String packageName) {
-    return '''
+    return TemplateLoader.load(
+      'injection_container',
+      defaultContent: '''
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:$packageName/core/network/api_client.dart';
@@ -138,11 +172,18 @@ Future<void> init() async {
 
   // Features
 }
-''';
+''',
+      replacements: {
+        '{{packageName}}': packageName,
+      },
+    );
   }
 
+  /// Generates the content for `api_client.dart`.
   static String apiClientContent() {
-    return '''
+    return TemplateLoader.load(
+      'api_client',
+      defaultContent: '''
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -160,14 +201,22 @@ class ApiClient {
     ));
   }
 }
-''';
+''',
+      replacements: {},
+    );
   }
 
+  /// Generates the content for `failures.dart`.
   static String errorContent() {
-    return '''
+    return TemplateLoader.load(
+      'failures',
+      defaultContent: '''
 abstract class Failure {
   final String message;
   const Failure(this.message);
+
+  @override
+  String toString() => '\$runtimeType: \$message';
 }
 
 class ServerFailure extends Failure {
@@ -178,14 +227,23 @@ class CacheFailure extends Failure {
   const CacheFailure([super.message = 'Cache Error']);
 }
 
+class NetworkFailure extends Failure {
+  const NetworkFailure([super.message = 'No Internet Connection']);
+}
+
 class GeneralFailure extends Failure {
   const GeneralFailure([super.message = 'Unexpected Error']);
 }
-''';
+''',
+      replacements: {},
+    );
   }
 
+  /// Generates the content for `app_theme.dart`.
   static String themeContent() {
-    return '''
+    return TemplateLoader.load(
+      'theme',
+      defaultContent: '''
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -193,12 +251,25 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF2196F3),
+        seedColor: const Color(0xFF6750A4),
         brightness: Brightness.light,
       ),
       appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
       ),
     );
   }
@@ -207,19 +278,35 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF2196F3),
+        seedColor: const Color(0xFF6750A4),
         brightness: Brightness.dark,
       ),
       appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
     );
   }
 }
-''';
+''',
+      replacements: {},
+    );
   }
 
+  /// Generates the content for `l10n.yaml`.
   static String l10nYamlContent() {
     return '''
 arb-dir: lib/l10n
@@ -228,11 +315,12 @@ output-localization-file: app_localizations.dart
 ''';
   }
 
+  /// Generates the content for the ARB localization file.
   static String arbContent(GeneratorConfig config) {
     return '''
 {
   "@@locale": "en",
-  "appTitle": "Flutter ${config.architecture.displayName}",
+  "appTitle": "Flutter \${config.architecture.displayName}",
   "@appTitle": {
     "description": "The title of the application"
   }
@@ -240,8 +328,11 @@ output-localization-file: app_localizations.dart
 ''';
   }
 
+  /// Generates the content for `sample_test.dart`.
   static String testContent() {
-    return '''
+    return TemplateLoader.load(
+      'sample_test',
+      defaultContent: '''
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -249,12 +340,17 @@ void main() {
     expect(1 + 1, 2);
   });
 }
-''';
+''',
+      replacements: {},
+    );
   }
 
+  /// Generates the content for `app_router.dart`.
   static String routerContent(GeneratorConfig config) {
     if (config.routing == Routing.autoRoute) {
-      return '''
+      return TemplateLoader.load(
+        'router_auto_route',
+        defaultContent: '''
 import 'package:auto_route/auto_route.dart';
 
 @AutoRouterConfig()
@@ -264,9 +360,13 @@ class AppRouter extends _\$AppRouter {
     // AutoRoute(page: HomeRoute.page, initial: true),
   ];
 }
-''';
+''',
+        replacements: {},
+      );
     } else if (config.routing == Routing.goRouter) {
-      return '''
+      return TemplateLoader.load(
+        'router_go_router',
+        defaultContent: '''
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
@@ -281,15 +381,17 @@ final router = GoRouter(
     ),
   ],
 );
-''';
+''',
+        replacements: {},
+      );
     }
-    return '''
+    return TemplateLoader.load(
+      'router_navigator',
+      defaultContent: '''
 import 'package:flutter/material.dart';
 
 class AppRoutes {
   static const String home = '/';
-  static const String login = '/login';
-  static const String register = '/register';
 
   static Map<String, WidgetBuilder> get routes => {
     home: (context) => const Scaffold(
@@ -309,14 +411,91 @@ class AppRoutes {
     );
   }
 }
-''';
+''',
+      replacements: {},
+    );
   }
 
+  /// Generates the content for `app_constants.dart`.
   static String constantsContent(GeneratorConfig config) {
-    return '''
+    return TemplateLoader.load(
+      'constants',
+      defaultContent: '''
 class AppConstants {
-  static const String appName = 'Flutter ${config.architecture.displayName}';
+  static const String appName = 'Flutter \${config.architecture.displayName}';
 }
-''';
+''',
+      replacements: {},
+    );
+  }
+
+  /// Generates GitHub Actions CI/CD workflow content.
+  static String githubActionsContent() {
+    return TemplateLoader.load(
+      'github_actions',
+      defaultContent: '''
+name: Flutter CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests
+        run: flutter test --coverage
+
+  build-android:
+    runs-on: ubuntu-latest
+    needs: analyze-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+      - run: flutter build apk --release
+
+  build-ios:
+    runs-on: macos-latest
+    needs: analyze-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+''',
+      replacements: {},
+    );
   }
 }

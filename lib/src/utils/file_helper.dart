@@ -1,45 +1,36 @@
-// ignore_for_file: public_member_api_docs
+/// File system helper utilities.
+///
+/// Manages directory creation, base file generation, configuration
+/// persistence, and overwrite protection for the generator.
+library;
+
 import 'dart:io';
 import 'dart:convert';
+import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 import '../models/generator_config.dart';
 import '../templates/base_templates.dart';
 import 'pubspec_helper.dart';
+import 'template_loader.dart';
+import 'history_helper.dart';
 
+/// Provides file system operations for the generator.
 class FileHelper {
-  static Future<void> generateBaseStructure(GeneratorConfig config) async {
-    final currentDir = Directory.current.path;
-    final packageName = PubspecHelper.getPackageName();
+  /// Default configuration filename.
+  static const String defaultConfig = '.flutter_arch_gen';
 
-    // 1. Create Directories
-    final directories = [
-      'lib/core/constants',
-      'lib/core/errors',
-      'lib/core/network',
-      'lib/core/theme',
-      'lib/core/utils',
-      'lib/core/services',
-      'lib/features',
-      'lib/routes',
-      'lib/di',
-      'assets/images',
-      'assets/fonts',
-      'assets/translations',
-    ];
+  /// Generates the base project structure for the given [config].
+  static Future<List<FileAction>> generateBaseStructure(
+    GeneratorConfig config, {
+    bool force = false,
+    String? outputDir,
+    String? configName,
+  }) async {
+    final baseDir = outputDir ?? Directory.current.path;
+    final packageName = PubspecHelper.getPackageName(baseDir: baseDir);
 
-    if (config.localization) {
-      directories.add('lib/l10n');
-    }
+    TemplateLoader.initTemplateDir();
 
-    if (config.tests) {
-      directories.addAll(['test/unit', 'test/widget', 'test/integration']);
-    }
-
-    for (var dir in directories) {
-      await Directory(p.join(currentDir, dir)).create(recursive: true);
-    }
-
-    // 2. Create Base Files
     final files = <String, String>{
       'lib/main.dart': BaseTemplates.mainContent(config, packageName),
       'lib/app.dart': BaseTemplates.appContent(config, packageName),
@@ -54,6 +45,7 @@ class FileHelper {
       '.env.dev': 'API_BASE_URL=https://dev.api.example.com',
       '.env.prod': 'API_BASE_URL=https://api.example.com',
       '.gitignore': _gitignoreContent(),
+      '.github/workflows/ci.yml': BaseTemplates.githubActionsContent(),
     };
 
     if (config.localization) {
@@ -65,27 +57,103 @@ class FileHelper {
       files['test/unit/sample_test.dart'] = BaseTemplates.testContent();
     }
 
+    final actions = <FileAction>[];
     files.forEach((path, content) {
-      File(p.join(currentDir, path)).writeAsStringSync(content);
+      final absolutePath = p.join(baseDir, path);
+      final file = File(absolutePath);
+      if (file.existsSync()) {
+        actions.add(FileAction(
+          path: absolutePath,
+          action: 'MODIFY',
+          oldContent: file.readAsStringSync(),
+          newContent: content,
+        ));
+      } else {
+        actions.add(FileAction(
+          path: absolutePath,
+          action: 'CREATE',
+          newContent: content,
+        ));
+      }
     });
 
-    // 3. Update pubspec.yaml
-    await PubspecHelper.addDependencies(config);
-
-    // 4. Save config
-    _saveConfig(config);
+    return actions;
   }
 
-  static void _saveConfig(GeneratorConfig config) {
-    File('.flutter_arch_gen.json')
-        .writeAsStringSync(jsonEncode(config.toJson()));
+  /// Renders a list of actions to the console as a plan.
+  static void renderPlan(List<FileAction> actions, Logger logger,
+      {String? baseDir}) {
+    final root = baseDir ?? Directory.current.path;
+    logger.info('');
+    logger.info(lightCyan.wrap('📋 Execution Plan:'));
+    logger.info('');
+
+    for (final action in actions) {
+      final relativePath = p.relative(action.path, from: root);
+      String prefix;
+      switch (action.action) {
+        case 'CREATE':
+          prefix = green.wrap('[+] CREATE')!;
+          break;
+        case 'MODIFY':
+          prefix = yellow.wrap('[M] MODIFY')!;
+          break;
+        case 'DELETE':
+          prefix = red.wrap('[-] DELETE')!;
+          break;
+        default:
+          prefix = action.action;
+      }
+      logger.info('  $prefix $relativePath');
+    }
+    logger.info('');
+    logger.info('Total: ${actions.length} changes.');
+    logger.info('');
   }
 
-  static GeneratorConfig? loadConfig() {
-    final file = File('.flutter_arch_gen.json');
+  /// Applies a list of actions to the file system.
+  static void applyPlan(List<FileAction> actions, {String? command}) {
+    for (final action in actions) {
+      final file = File(action.path);
+      if (action.action == 'DELETE') {
+        if (file.existsSync()) file.deleteSync();
+      } else {
+        if (!file.parent.existsSync()) {
+          file.parent.createSync(recursive: true);
+        }
+        file.writeAsStringSync(action.newContent ?? '');
+      }
+    }
+
+    if (command != null && actions.isNotEmpty) {
+      HistoryHelper.saveEntry(HistoryEntry(
+        timestamp: DateTime.now(),
+        command: command,
+        actions: actions,
+      ));
+    }
+  }
+
+  /// Saves the generator configuration.
+  static void saveConfig(GeneratorConfig config,
+      {String? baseDir, String? name}) {
+    final configBase = baseDir ?? Directory.current.path;
+    final filename =
+        name == null ? '$defaultConfig.json' : '$defaultConfig.$name.json';
+    final configPath = p.join(configBase, filename);
+    File(configPath).writeAsStringSync(jsonEncode(config.toJson()));
+  }
+
+  /// Loads the generator configuration.
+  static GeneratorConfig? loadConfig({String? baseDir, String? name}) {
+    final configBase = baseDir ?? Directory.current.path;
+    final filename =
+        name == null ? '$defaultConfig.json' : '$defaultConfig.$name.json';
+    final configPath = p.join(configBase, filename);
+    final file = File(configPath);
     if (!file.existsSync()) return null;
     try {
-      final json = jsonDecode(file.readAsStringSync());
+      final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
       return GeneratorConfig.fromJson(json);
     } catch (_) {
       return null;
@@ -94,30 +162,18 @@ class FileHelper {
 
   static String _gitignoreContent() {
     return '''
-# Environment files
-.env*
-!.env.example
-
-# Generator config
-.flutter_arch_gen.json
-
-# Dart/Flutter
+# Flutter/Dart
 .dart_tool/
 .packages
+.pub-cache/
+.pub/
 build/
-.flutter-plugins
-.flutter-plugins-dependencies
+ios/.generated/
+*.env*
+!.env.example
 
-# IDE
-.idea/
-.vscode/
-*.iml
-
-# Generated files
-*.g.dart
-*.freezed.dart
-*.gr.dart
-*.config.dart
+# Config
+.flutter_arch_gen*.json
 ''';
   }
 }

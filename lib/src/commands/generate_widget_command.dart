@@ -8,12 +8,12 @@ import '../utils/validation_utils.dart';
 import '../utils/template_loader.dart';
 import '../generators/base_generator.dart';
 
-/// The `model` command — generates a Freezed model file.
-class GenerateModelCommand extends Command<int> {
-  /// Creates a [GenerateModelCommand].
-  GenerateModelCommand({required Logger logger}) : _logger = logger {
+/// The `widget` command — generates a new Widget.
+class GenerateWidgetCommand extends Command<int> {
+  /// Creates a [GenerateWidgetCommand].
+  GenerateWidgetCommand({required Logger logger}) : _logger = logger {
     argParser.addOption('feature',
-        abbr: 'f', help: 'Target feature for the model');
+        abbr: 'f', help: 'Target feature for the widget');
     argParser.addOption('output', abbr: 'o', help: 'Custom output directory');
     argParser.addOption('config',
         abbr: 'c', help: 'Configuration profile name');
@@ -24,21 +24,21 @@ class GenerateModelCommand extends Command<int> {
   final Logger _logger;
 
   @override
-  String get name => 'model';
+  String get name => 'widget';
 
   @override
-  String get description => 'Generate a new Freezed model.';
+  String get description => 'Generate a new feature widget.';
 
   @override
   Future<int> run() async {
-    final modelName =
+    final widgetName =
         argResults?.rest.isNotEmpty == true ? argResults?.rest.first : null;
-    if (modelName == null) {
-      _logger.err('Please provide a model name.');
+    if (widgetName == null) {
+      _logger.err('Please provide a widget name.');
       return ExitCode.usage.code;
     }
 
-    final validationError = ValidationUtils.validateName(modelName, 'Model');
+    final validationError = ValidationUtils.validateName(widgetName, 'Widget');
     if (validationError != null) {
       _logger.err(validationError);
       return ExitCode.usage.code;
@@ -54,40 +54,39 @@ class GenerateModelCommand extends Command<int> {
 
     BaseGenerator.beginTracking();
 
-    final fileName = StringUtils.toSnakeCase(modelName);
-    final className = StringUtils.toPascalCase(modelName);
+    final fileName = StringUtils.toSnakeCase(widgetName);
+    final className = StringUtils.toPascalCase(widgetName);
 
     final content = TemplateLoader.load(
-      'model',
+      'widget',
       defaultContent: '''
-import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/material.dart';
 
-part '$fileName.freezed.dart';
-part '$fileName.g.dart';
+class $className extends StatelessWidget {
+  const $className({super.key});
 
-@freezed
-class $className with _\$$className {
-  const factory $className({
-    required int id,
-  }) = _$className;
-
-  factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      child: Text('$className'),
+    );
+  }
 }
 ''',
       replacements: {
         '{{className}}': className,
-        '{{fileName}}': fileName,
       },
       baseDir: baseDir,
     );
 
-    final modelDir = config?.getModelsDirectory() ?? 'data/models';
+    final widgetDir = config?.getWidgetsDirectory() ?? 'presentation/widgets';
     final targetPath = featureName != null
         ? p.join(baseDir, 'lib', 'features',
-            StringUtils.toSnakeCase(featureName), modelDir)
-        : p.join(baseDir, 'lib', 'core', 'models');
+            StringUtils.toSnakeCase(featureName), widgetDir)
+        : p.join(baseDir, 'lib', 'core', 'widgets');
 
-    BaseGenerator.writeFile(p.join(targetPath, '$fileName.dart'), content);
+    BaseGenerator.writeFile(
+        p.join(targetPath, '${fileName}_widget.dart'), content);
 
     final actions = BaseGenerator.endTracking();
     FileHelper.renderPlan(actions, _logger, baseDir: baseDir);
@@ -98,12 +97,10 @@ class $className with _\$$className {
     }
 
     if (actions.isNotEmpty) {
-      final confirm = _logger.confirm('Generate model?', defaultValue: true);
+      final confirm = _logger.confirm('Generate widget?', defaultValue: true);
       if (confirm) {
-        FileHelper.applyPlan(actions, command: 'model $modelName');
-        _logger.success('Model $className generated successfully! 🎉');
-        _logger.info(
-            '💡 Run `dart run build_runner build --delete-conflicting-outputs` to generate code.');
+        FileHelper.applyPlan(actions, command: 'widget $widgetName');
+        _logger.success('Widget $className generated successfully! 🎉');
       }
     }
 

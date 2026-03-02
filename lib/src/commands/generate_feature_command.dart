@@ -1,66 +1,124 @@
-// ignore_for_file: public_member_api_docs
+/// Command to generate a new feature.
+///
+/// Orchestrates the generation of a feature following the project's
+/// selected architecture and state management patterns.
+library;
+
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
-import '../utils/feature_helper.dart';
 import '../utils/file_helper.dart';
-import '../models/generator_config.dart';
+import '../utils/feature_helper.dart';
+import '../utils/validation_utils.dart';
 
+/// The `generate feature` command.
 class GenerateFeatureCommand extends Command<int> {
+  /// Creates a [GenerateFeatureCommand].
   GenerateFeatureCommand({required Logger logger}) : _logger = logger {
-    argParser.addOption('name', abbr: 'n', help: 'Name of the feature');
+    argParser.addFlag(
+      'force',
+      abbr: 'f',
+      negatable: false,
+      help: 'Overwrite existing feature files.',
+    );
     argParser.addOption(
-      'state',
-      abbr: 's',
-      help: 'State management to use',
-      allowed: StateManagement.values.map((e) => e.name).toList(),
-      defaultsTo: StateManagement.bloc.name,
+      'output',
+      abbr: 'o',
+      help: 'Custom output directory (monorepo support).',
+    );
+    argParser.addOption(
+      'config',
+      abbr: 'c',
+      help:
+          'Configuration profile name (e.g. "dev" for .flutter_arch_gen.dev.json).',
+    );
+    argParser.addFlag(
+      'dry-run',
+      abbr: 'n',
+      negatable: false,
+      help: 'Preview changes without applying them.',
     );
   }
+
   final Logger _logger;
 
   @override
   String get name => 'feature';
 
   @override
-  String get description => 'Generate a new feature module.';
+  String get description => 'Generate a new feature scaffold.';
+
+  @override
+  String get invocation => 'flutter_arch_gen generate feature <name> [flags]';
 
   @override
   Future<int> run() async {
-    final featureName = argResults?['name'] ??
-        (argResults?.rest.isNotEmpty == true ? argResults?.rest.first : null);
+    final featureName =
+        argResults?.rest.isNotEmpty == true ? argResults!.rest.first : null;
 
     if (featureName == null) {
       _logger.err('Please provide a feature name.');
+      _logger.info(usage);
       return ExitCode.usage.code;
     }
 
-    final stateName = argResults?['state'] as String;
-    final stateManagement =
-        StateManagement.values.firstWhere((e) => e.name == stateName);
+    // Validate name
+    final validationError =
+        ValidationUtils.validateName(featureName, 'feature');
+    if (validationError != null) {
+      _logger.err(validationError);
+      return ExitCode.usage.code;
+    }
 
-    // Try to load existing config
-    final savedConfig = FileHelper.loadConfig();
+    final force = argResults?['force'] == true;
+    final outputDir = argResults?['output'] as String?;
+    final configName = argResults?['config'] as String?;
+    final dryRun = argResults?['dry-run'] == true;
 
-    final progress = _logger.progress('🏗 Generating feature: $featureName...');
+    final config = FileHelper.loadConfig(baseDir: outputDir, name: configName);
+    if (config == null) {
+      _logger.err(
+          'No .flutter_arch_gen${configName != null ? ".$configName" : ""}.json found. Run `flutter_arch_gen init` first.');
+      return ExitCode.usage.code;
+    }
 
     try {
-      final config = savedConfig ??
-          GeneratorConfig(
-            architecture: Architecture.clean,
-            stateManagement: stateManagement,
-            routing: Routing.goRouter, // Default
-            localization: true,
-            firebase: false,
-            tests: true,
-          );
+      final actions = await FeatureHelper.generateFeature(
+        featureName,
+        config: config,
+        logger: _logger,
+        force: force,
+        outputDir: outputDir,
+      );
 
-      await FeatureHelper.generateFeature(featureName,
-          config: config, logger: _logger);
-      progress.complete(
-          'Feature $featureName generated with ${config.architecture.displayName}! ✅');
+      if (actions.isEmpty) {
+        _logger.info('No changes needed.');
+        return ExitCode.success.code;
+      }
+
+      FileHelper.renderPlan(actions, _logger, baseDir: outputDir);
+
+      if (dryRun) {
+        _logger.info('✅ Dry run complete. No files were modified.');
+        return ExitCode.success.code;
+      }
+
+      final confirm = _logger.confirm(
+        'Proceed with these changes?',
+        defaultValue: true,
+      );
+
+      if (!confirm) {
+        _logger.info('Cancelled.');
+        return ExitCode.success.code;
+      }
+
+      final progress = _logger.progress('🚀 Applying changes...');
+      FileHelper.applyPlan(actions, command: 'generate feature $featureName');
+      progress.complete('Feature "$featureName" generated successfully! 🎉');
+
       return ExitCode.success.code;
     } catch (e) {
-      progress.fail('Failed to generate feature: $e');
+      _logger.err('Failed to generate feature: $e');
       return ExitCode.software.code;
     }
   }
