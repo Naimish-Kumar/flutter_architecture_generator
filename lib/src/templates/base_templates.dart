@@ -27,9 +27,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
-$firebaseImport
-import 'package:$packageName/app.dart';
-import 'package:$packageName/di/injection_container.dart' as di;
+{{firebaseImport}}
+import 'package:{{packageName}}/app.dart';
+import 'package:{{packageName}}/di/injection_container.dart' as di;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,11 +42,11 @@ void main() async {
 
   // Load environment variables
   await dotenv.load(fileName: kReleaseMode ? ".env.prod" : ".env.dev");
-  $firebaseInit
+  {{firebaseInit}}
 
   await di.init();
   
-  runApp(${myAppConst}MyApp());
+  runApp({{myAppConst}}MyApp());
 }
 ''',
       replacements: {
@@ -124,19 +124,19 @@ void main() async {
       'app',
       defaultContent: '''
 import 'package:flutter/material.dart';
-$riverpodImport
-$getxImport
-$routerImport
-$themeImport
-$l10nImport
+{{riverpodImport}}
+{{getxImport}}
+{{routerImport}}
+{{themeImport}}
+{{l10nImport}}
 
 class MyApp extends StatelessWidget {
-  ${isAutoRoute ? 'MyApp({super.key}) {}' : 'const MyApp({super.key});'}
-  $autoRouteField
+  {{appConstructor}}
+  {{autoRouteField}}
 
   @override
   Widget build(BuildContext context) {
-    return $materialApp;
+    return {{materialApp}};
   }
 }
 ''',
@@ -150,6 +150,8 @@ class MyApp extends StatelessWidget {
         '{{autoRouteField}}': autoRouteField,
         '{{materialApp}}': materialApp,
         '{{archName}}': config.architecture.displayName,
+        '{{appConstructor}}':
+            isAutoRoute ? 'MyApp({super.key}) {}' : 'const MyApp({super.key});',
       },
     );
   }
@@ -161,7 +163,7 @@ class MyApp extends StatelessWidget {
       defaultContent: '''
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
-import 'package:$packageName/core/network/api_client.dart';
+import 'package:{{packageName}}/core/network/api_client.dart';
 
 final sl = GetIt.instance;
 

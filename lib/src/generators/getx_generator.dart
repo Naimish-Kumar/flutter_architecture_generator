@@ -6,6 +6,7 @@ library;
 
 import '../models/generator_config.dart';
 import '../utils/string_utils.dart';
+import '../utils/template_loader.dart';
 import 'base_generator.dart';
 
 /// Generates features following GetX Architecture.
@@ -35,31 +36,49 @@ class GetxGenerator extends BaseGenerator {
     final snakeName = StringUtils.toSnakeCase(featureName);
 
     // 1. Model
-    BaseGenerator.writeFile('$featurePath/models/${snakeName}_model.dart', '''
-class ${pascalName}Model {
+    final modelContent = TemplateLoader.load(
+      'getx_model',
+      defaultContent: '''
+class {{className}}Model {
   final int id;
-  const ${pascalName}Model({required this.id});
+  const {{className}}Model({required this.id});
 
-  factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
-    return ${pascalName}Model(id: json['id'] as int);
+  factory {{className}}Model.fromJson(Map<String, dynamic> json) {
+    return {{className}}Model(id: json['id'] as int);
   }
 
   Map<String, dynamic> toJson() => {'id': id};
 }
-''');
+''',
+      replacements: {
+        '{{className}}': pascalName,
+        '{{fileName}}': snakeName,
+      },
+    );
+    BaseGenerator.writeFile(
+        '$featurePath/models/${snakeName}_model.dart', modelContent);
 
     // 2. Binding
-    BaseGenerator.writeFile(
-        '$featurePath/bindings/${snakeName}_binding.dart', '''
+    final bindingContent = TemplateLoader.load(
+      'getx_binding',
+      defaultContent: '''
 import 'package:get/get.dart';
-import 'package:$packageName/features/$snakeName/controllers/${snakeName}_controller.dart';
+import 'package:{{packageName}}/features/{{fileName}}/controllers/{{fileName}}_controller.dart';
 
-class ${pascalName}Binding extends Bindings {
+class {{className}}Binding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => ${pascalName}Controller());
+    Get.lazyPut(() => {{className}}Controller());
   }
 }
-''');
+''',
+      replacements: {
+        '{{className}}': pascalName,
+        '{{fileName}}': snakeName,
+        '{{packageName}}': packageName,
+      },
+    );
+    BaseGenerator.writeFile(
+        '$featurePath/bindings/${snakeName}_binding.dart', bindingContent);
   }
 }

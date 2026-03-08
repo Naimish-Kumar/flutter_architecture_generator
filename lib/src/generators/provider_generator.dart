@@ -5,6 +5,7 @@
 library;
 
 import '../models/generator_config.dart';
+import '../utils/template_loader.dart';
 import 'base_generator.dart';
 import '../utils/string_utils.dart';
 
@@ -34,17 +35,26 @@ class ProviderGenerator extends BaseGenerator {
     final snakeName = StringUtils.toSnakeCase(featureName);
 
     // 1. Model
-    BaseGenerator.writeFile('$featurePath/models/${snakeName}_model.dart', '''
-class ${pascalName}Model {
+    final modelContent = TemplateLoader.load(
+      'provider_model',
+      defaultContent: '''
+class {{className}}Model {
   final int id;
-  const ${pascalName}Model({required this.id});
+  const {{className}}Model({required this.id});
 
-  factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
-    return ${pascalName}Model(id: json['id'] as int);
+  factory {{className}}Model.fromJson(Map<String, dynamic> json) {
+    return {{className}}Model(id: json['id'] as int);
   }
 
   Map<String, dynamic> toJson() => {'id': id};
 }
-''');
+''',
+      replacements: {
+        '{{className}}': pascalName,
+        '{{fileName}}': snakeName,
+      },
+    );
+    BaseGenerator.writeFile(
+        '$featurePath/models/${snakeName}_model.dart', modelContent);
   }
 }

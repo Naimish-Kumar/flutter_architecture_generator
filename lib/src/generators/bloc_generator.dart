@@ -6,6 +6,7 @@ library;
 
 import '../models/generator_config.dart';
 import '../utils/string_utils.dart';
+import '../utils/template_loader.dart';
 import 'base_generator.dart';
 
 /// Generates features following BLoC Architecture.
@@ -35,34 +36,52 @@ class BlocGenerator extends BaseGenerator {
     final snakeName = StringUtils.toSnakeCase(featureName);
 
     // 1. Model
-    BaseGenerator.writeFile('$featurePath/models/${snakeName}_model.dart', '''
-class ${pascalName}Model {
+    final modelContent = TemplateLoader.load(
+      'bloc_model',
+      defaultContent: '''
+class {{className}}Model {
   final int id;
-  const ${pascalName}Model({required this.id});
+  const {{className}}Model({required this.id});
 
-  factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
-    return ${pascalName}Model(id: json['id'] as int);
+  factory {{className}}Model.fromJson(Map<String, dynamic> json) {
+    return {{className}}Model(id: json['id'] as int);
   }
 
   Map<String, dynamic> toJson() => {'id': id};
 }
-''');
+''',
+      replacements: {
+        '{{className}}': pascalName,
+        '{{fileName}}': snakeName,
+      },
+    );
+    BaseGenerator.writeFile(
+        '$featurePath/models/${snakeName}_model.dart', modelContent);
 
     // 2. Repository
-    BaseGenerator.writeFile(
-        '$featurePath/repositories/${snakeName}_repository.dart', '''
-import 'package:$packageName/core/network/api_client.dart';
-import 'package:$packageName/features/$snakeName/models/${snakeName}_model.dart';
+    final repoContent = TemplateLoader.load(
+      'bloc_repository',
+      defaultContent: '''
+import 'package:{{packageName}}/core/network/api_client.dart';
+import 'package:{{packageName}}/features/{{fileName}}/models/{{fileName}}_model.dart';
 
-class ${pascalName}Repository {
+class {{className}}Repository {
   final ApiClient apiClient;
-  ${pascalName}Repository(this.apiClient) {}
+  {{className}}Repository(this.apiClient) {}
 
-  Future<${pascalName}Model> getData() async {
-    final response = await apiClient.dio.get('/$snakeName');
-    return ${pascalName}Model.fromJson(response.data);
+  Future<{{className}}Model> getData() async {
+    final response = await apiClient.dio.get('/{{fileName}}');
+    return {{className}}Model.fromJson(response.data);
   }
 }
-''');
+''',
+      replacements: {
+        '{{className}}': pascalName,
+        '{{fileName}}': snakeName,
+        '{{packageName}}': packageName,
+      },
+    );
+    BaseGenerator.writeFile(
+        '$featurePath/repositories/${snakeName}_repository.dart', repoContent);
   }
 }

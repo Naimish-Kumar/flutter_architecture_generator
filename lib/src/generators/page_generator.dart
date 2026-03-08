@@ -31,8 +31,8 @@ class PageGenerator {
         'page',
         defaultContent: '''
 import 'package:flutter/material.dart';
-$autoRouteImport
-$routeAnnotation
+{{autoRouteImport}}
+{{routeAnnotation}}
 class {{className}}Page extends StatelessWidget {
   const {{className}}Page({super.key});
 
@@ -70,8 +70,8 @@ class {{className}}Page extends StatelessWidget {
       'login_page',
       defaultContent: '''
 import 'package:flutter/material.dart';
-$autoRouteImport
-$routeAnnotation
+{{autoRouteImport}}
+{{routeAnnotation}}
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -204,8 +204,8 @@ class _LoginPageState extends State<LoginPage> {
       'register_page',
       defaultContent: '''
 import 'package:flutter/material.dart';
-$autoRouteImport
-$routeAnnotation
+{{autoRouteImport}}
+{{routeAnnotation}}
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 

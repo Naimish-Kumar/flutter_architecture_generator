@@ -84,20 +84,20 @@ class StateManagementGenerator {
       defaultContent: '''
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-$blocImport
+{{blocImport}}
 
-part '${snakeName}_event.dart';
-part '${snakeName}_state.dart';
+part '{{fileName}}_event.dart';
+part '{{fileName}}_state.dart';
 
-class ${pascalName}Bloc extends Bloc<${pascalName}Event, ${pascalName}State> {
-  final $depType $depField;
-  ${pascalName}Bloc(this.$depField) : super(${pascalName}Initial()) {
-    on<Get${pascalName}DataEvent>((event, emit) async {
-      emit(${pascalName}Loading());
+class {{className}}Bloc extends Bloc<{{className}}Event, {{className}}State> {
+  final {{depType}} {{depField}};
+  {{className}}Bloc(this.{{depField}}) : super({{className}}Initial()) {
+    on<Get{{className}}DataEvent>((event, emit) async {
+      emit({{className}}Loading());
       try {
-        $usageLine
+        {{usageLine}}
       } catch (e) {
-        emit(${pascalName}Error(message: e.toString()));
+        emit({{className}}Error(message: e.toString()));
       }
     });
   }
@@ -117,16 +117,16 @@ class ${pascalName}Bloc extends Bloc<${pascalName}Event, ${pascalName}State> {
     final eventContent = TemplateLoader.load(
       'bloc_event',
       defaultContent: '''
-part of '${snakeName}_bloc.dart';
+part of '{{fileName}}_bloc.dart';
 
-abstract class ${pascalName}Event extends Equatable {
-  const ${pascalName}Event();
+abstract class {{className}}Event extends Equatable {
+  const {{className}}Event();
 
   @override
   List<Object> get props => [];
 }
 
-class Get${pascalName}DataEvent extends ${pascalName}Event {}
+class Get{{className}}DataEvent extends {{className}}Event {}
 ''',
       replacements: {
         '{{className}}': pascalName,
@@ -137,27 +137,27 @@ class Get${pascalName}DataEvent extends ${pascalName}Event {}
     final stateContent = TemplateLoader.load(
       'bloc_state',
       defaultContent: '''
-part of '${snakeName}_bloc.dart';
+part of '{{fileName}}_bloc.dart';
 
-abstract class ${pascalName}State extends Equatable {
-  const ${pascalName}State();
+abstract class {{className}}State extends Equatable {
+  const {{className}}State();
   
   @override
   List<Object> get props => [];
 }
 
-class ${pascalName}Initial extends ${pascalName}State {}
-class ${pascalName}Loading extends ${pascalName}State {}
-class ${pascalName}Loaded extends ${pascalName}State {
+class {{className}}Initial extends {{className}}State {}
+class {{className}}Loading extends {{className}}State {}
+class {{className}}Loaded extends {{className}}State {
   final String data;
-  const ${pascalName}Loaded({required this.data});
+  const {{className}}Loaded({required this.data});
 
   @override
   List<Object> get props => [data];
 }
-class ${pascalName}Error extends ${pascalName}State {
+class {{className}}Error extends {{className}}State {
   final String message;
-  const ${pascalName}Error({required this.message});
+  const {{className}}Error({required this.message});
 
   @override
   List<Object> get props => [message];
@@ -201,20 +201,20 @@ class ${pascalName}Error extends ${pascalName}State {
       defaultContent: '''
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-$cubitImport
+{{cubitImport}}
 
-part '${snakeName}_state.dart';
+part '{{fileName}}_state.dart';
 
-class ${pascalName}Cubit extends Cubit<${pascalName}State> {
-  final $depType $depField;
-  ${pascalName}Cubit(this.$depField) : super(${pascalName}Initial()) {}
+class {{className}}Cubit extends Cubit<{{className}}State> {
+  final {{depType}} {{depField}};
+  {{className}}Cubit(this.{{depField}}) : super({{className}}Initial()) {}
 
   Future<void> fetchData() async {
-    emit(${pascalName}Loading());
+    emit({{className}}Loading());
     try {
-      $usageLine
+      {{usageLine}}
     } catch (e) {
-      emit(${pascalName}Error(message: e.toString()));
+      emit({{className}}Error(message: e.toString()));
     }
   }
 }
@@ -233,27 +233,27 @@ class ${pascalName}Cubit extends Cubit<${pascalName}State> {
     final stateContent = TemplateLoader.load(
       'cubit_state',
       defaultContent: '''
-part of '${snakeName}_cubit.dart';
+part of '{{fileName}}_cubit.dart';
 
-abstract class ${pascalName}State extends Equatable {
-  const ${pascalName}State();
+abstract class {{className}}State extends Equatable {
+  const {{className}}State();
   
   @override
   List<Object> get props => [];
 }
 
-class ${pascalName}Initial extends ${pascalName}State {}
-class ${pascalName}Loading extends ${pascalName}State {}
-class ${pascalName}Loaded extends ${pascalName}State {
+class {{className}}Initial extends {{className}}State {}
+class {{className}}Loading extends {{className}}State {}
+class {{className}}Loaded extends {{className}}State {
   final String data;
-  const ${pascalName}Loaded({required this.data});
+  const {{className}}Loaded({required this.data});
 
   @override
   List<Object> get props => [data];
 }
-class ${pascalName}Error extends ${pascalName}State {
+class {{className}}Error extends {{className}}State {
   final String message;
-  const ${pascalName}Error({required this.message});
+  const {{className}}Error({required this.message});
 
   @override
   List<Object> get props => [message];
