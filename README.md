@@ -23,10 +23,10 @@ Experience our high-fidelity, interactive documentation with live command explor
 ### 📖 Technical Guides
 | Guide | Description |
 |---|---|
-| [🏁 **Getting Started**](./doc/GETTING_STARTED.md) | Installation, Initialization, and First Project |
-| [🏗️ **Architecture Patterns**](./doc/ARCHITECTURE_PATTERNS.md) | Deep dive into Clean, MVVM, BLoC structures |
-| [🚀 **Core Features**](./doc/CORE_FEATURES.md) | Theme Generator, Chat Module, Smart Refactor |
-| [🛠️ **Maintenance**](./doc/MAINTENANCE.md) | Undo, Rename, Delete, and Project Health |
+| [🏁 **Getting Started**](./readme_doc/GETTING_STARTED.md) | Installation, Initialization, and First Project |
+| [🏗️ **Architecture Patterns**](./readme_doc/ARCHITECTURE_PATTERNS.md) | Deep dive into Clean, MVVM, BLoC structures |
+| [🚀 **Core Features**](./readme_doc/CORE_FEATURES.md) | Theme Generator, Chat Module, Smart Refactor |
+| [🛠️ **Maintenance**](./readme_doc/MAINTENANCE.md) | Undo, Rename, Delete, and Project Health |
 
 ---
 
