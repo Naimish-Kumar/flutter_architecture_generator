@@ -1,3 +1,9 @@
+## 1.2.3
+
+### 🐞 Bug Fixes
+- **Constructor Syntax**: Fixed syntax errors in generated `app.dart` and Chat module where non-const constructors were missing required bodies `{}`.
+- **AutoRoute Compatibility**: Ensured `MyApp` constructor correctly handles the presence of the `AppRouter` final field.
+
 ## 1.2.2
 
 ### 🐞 Bug Fixes
