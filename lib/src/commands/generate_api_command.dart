@@ -238,9 +238,13 @@ class {{className}}Repository {
       baseDir: baseDir,
     );
 
-    final modelDir = p.join(featurePath, 'models');
-    final serviceDir = p.join(featurePath, 'services');
-    final repoDir = p.join(featurePath, 'repositories');
+    final modelDir = p.join(featurePath, config.getModelsDirectory());
+    final serviceDir = p.join(featurePath, config.getServicesDirectory());
+    final repoDir = p.join(
+        featurePath,
+        config.architecture == Architecture.clean
+            ? 'data/repositories'
+            : 'repositories');
 
     BaseGenerator.writeFile(
         p.join(modelDir, '${snakeName}_model.dart'), modelContent);

@@ -105,16 +105,20 @@ class DeleteFeatureCommand extends Command<int> {
 
     // Check if it's a chat feature (has socket_service.dart or chat_service.dart)
     final hasChatFiles =
-        Directory(p.join(featurePath, 'services')).existsSync() &&
-            (File(p.join(featurePath, 'services', 'chat_service.dart'))
-                    .existsSync() ||
-                File(p.join(featurePath, 'services', 'socket_service.dart'))
-                    .existsSync());
+        _hasChatServiceFiles(p.join(featurePath, 'services')) ||
+            _hasChatServiceFiles(p.join(featurePath, 'data', 'services'));
 
     if (snakeName == 'chat' || hasChatFiles) {
       PubspecHelper.removeCustomDependencies(['socket_io_client'],
           baseDir: baseDir);
     }
+  }
+
+  bool _hasChatServiceFiles(String dirPath) {
+    final dir = Directory(dirPath);
+    if (!dir.existsSync()) return false;
+    return File(p.join(dirPath, 'chat_service.dart')).existsSync() ||
+        File(p.join(dirPath, 'socket_service.dart')).existsSync();
   }
 
   void _cleanUpDI(String baseDir, String snakeName, String pascalName) {

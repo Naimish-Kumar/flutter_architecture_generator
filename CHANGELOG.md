@@ -1,20 +1,17 @@
-## 1.2.4
-
-### 🐞 Bug Fixes
-- **Template Placeholders**: Replaced direct Dart string interpolation with explicit `{{archName}}` placeholders in `app.dart`, `app_constant.dart`, and `app_en.arb` to ensure reliable code generation and support for custom templates.
-- **Undefined Name 'config'**: Fixed a critical error where some generated files would literally contain the variable name `config` instead of its value.
-
-## 1.2.3
-
-### 🐞 Bug Fixes
-- **Constructor Syntax**: Fixed syntax errors in generated `app.dart` and Chat module where non-const constructors were missing required bodies `{}`.
-- **AutoRoute Compatibility**: Ensured `MyApp` constructor correctly handles the presence of the `AppRouter` final field.
-
 ## 1.2.2
 
+### 🏗️ Architectural Core & Stability
+- **Unified Routing Templates**: Re-engineered `app.dart`, `main.dart`, and `app_router.dart` for both **AutoRoute** and **GoRouter**. Fixed multiple compilation errors where the router field was missing or incorrectly scoped in the `MyApp` widget.
+- **Smart DI Registration**: Rewrote the `DIRegistrar` to independently register architecture-specific logic (layers and use cases) and state-management logic (controllers/blocs). This enables flawless cross-compatibility between patterns like **Clean Arch + BLoC** and **MVVM + Provider**.
+- **Context-Aware State Management**: Fixed `StateManagementGenerator` to correctly target the `services` directory when using **MVVM** and `repositories` when using **Clean Architecture** for BLoC/Cubit.
+- **Robust Feature Scaffolding**: Completed missing file generation for **BLoC, GetX, and Provider** patterns. Features now generate ready-to-use business logic files with absolute package imports and proper boilerplate.
+
 ### 🐞 Bug Fixes
-- **Template Interpolation**: Fixed syntax errors in generated Use Cases and Riverpod providers caused by incorrect string escaping in templates.
-- **Base Architecture**: Resolved "const" and "title" interpolation errors in the base `app.dart` and `main.dart` files.
+- **Template Placeholders**: Replaced direct Dart interpolation with explicit `{{archName}}`, `{{className}}`, and `{{fileName}}` placeholders for reliable generation and custom template support.
+- **Undefined Name 'config'**: Fixed a critical bug where the literal string `config` would appear in generated files instead of resolved values.
+- **API Strategy Fix**: The `api` command now correctly respects architecture-specific directories (`data/repositories` vs `repositories`).
+- **Freezed Conventions**: Corrected the `_className` factory implementation naming to match internal Freezed standards.
+- **GoRouter Integration**: Fixed the `AppRouter` class wrapper in GoRouter templates to ensure it can be properly instantiated and injected into the app.
 
 ## 1.2.1
 

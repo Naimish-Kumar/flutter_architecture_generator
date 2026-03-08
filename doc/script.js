@@ -85,10 +85,10 @@ const commands = [
     },
     {
         name: 'api',
-        desc: 'Scaffolds an API integration layer.',
-        usage: 'flutter_arch_gen api',
-        example: 'flutter_arch_gen api',
-        details: 'Sets up a base API client (using Dio), interceptors, and environment-based configuration for networking.'
+        desc: 'Generates a Model, Repository, and Service directly from a live API endpoint URL.',
+        usage: 'flutter_arch_gen api <name> --url <endpoint> --feature <target>',
+        example: 'flutter_arch_gen api Product --url https://api.example.com/v1/products/1 --feature shop',
+        details: 'Fetches a sample JSON from the URL, performs type inference to build a Freezed/JsonSerializable model, and scaffolds the corresponding Service and Repository layers. Supports secured APIs via automated token prompts.'
     },
     {
         name: 'delete',

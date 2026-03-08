@@ -68,7 +68,8 @@ class DIRegistrar {
             '  sl.registerFactory(() => ChatProvider(chatService: sl(), socketService: sl()));\n';
       }
     } else {
-      // Standard feature registration logic...
+      // Standard feature registration logic
+      // 1. Architecture-specific (Backend Layers)
       switch (config.architecture) {
         case Architecture.clean:
           imports.addAll([
@@ -77,8 +78,8 @@ class DIRegistrar {
             "import 'package:{{packageName}}/features/{{fileName}}/data/datasources/{{fileName}}_remote_datasource.dart';",
             "import 'package:{{packageName}}/features/{{fileName}}/data/repositories/{{fileName}}_repository_impl.dart';",
           ]);
-          registration = '''
-  // {{className}} Feature
+          registration += '''
+  // {{className}} Feature (Clean)
   sl.registerLazySingleton<I{{className}}RemoteDataSource>(() => {{className}}RemoteDataSourceImpl(sl()));
   sl.registerLazySingleton<I{{className}}Repository>(() => {{className}}RepositoryImpl(sl()));
   sl.registerLazySingleton(() => Get{{className}}UseCase(sl()));
@@ -87,43 +88,70 @@ class DIRegistrar {
         case Architecture.mvvm:
           imports.addAll([
             "import 'package:{{packageName}}/features/{{fileName}}/services/{{fileName}}_service.dart';",
-            "import 'package:{{packageName}}/features/{{fileName}}/view_models/{{fileName}}_view_model.dart';",
           ]);
-          registration = '''
+          registration += '''
   // {{className}} Feature (MVVM)
   sl.registerLazySingleton(() => {{className}}Service(sl()));
-  sl.registerFactory(() => {{className}}ViewModel(sl()));
 ''';
           break;
         case Architecture.bloc:
           imports.addAll([
             "import 'package:{{packageName}}/features/{{fileName}}/repositories/{{fileName}}_repository.dart';",
-            "import 'package:{{packageName}}/features/{{fileName}}/bloc/{{fileName}}_bloc.dart';",
           ]);
-          registration = '''
-  // {{className}} Feature (BLoC)
+          registration += '''
+  // {{className}} Feature (BLoC Architecture)
   sl.registerLazySingleton(() => {{className}}Repository(sl()));
-  sl.registerFactory(() => {{className}}Bloc(sl()));
 ''';
           break;
         case Architecture.getx:
-          imports.addAll([
-            "import 'package:{{packageName}}/features/{{fileName}}/controllers/{{fileName}}_controller.dart';",
-          ]);
-          registration = '''
-  // {{className}} Feature (GetX)
-  sl.registerFactory(() => {{className}}Controller());
-''';
+          // GetX architecture standard structure
           break;
         case Architecture.provider:
-          imports.addAll([
-            "import 'package:{{packageName}}/features/{{fileName}}/providers/{{fileName}}_provider.dart';",
-          ]);
-          registration = '''
-  // {{className}} Feature (Provider)
-  sl.registerFactory(() => {{className}}Provider());
-''';
+          // Provider architecture standard structure
           break;
+      }
+
+      // 2. State Management Specific (Frontend Logic)
+      final stateDir = config.getStateManagementDirectory();
+      switch (config.stateManagement) {
+        case StateManagement.bloc:
+        case StateManagement.cubit:
+          final smName =
+              config.stateManagement == StateManagement.bloc ? 'Bloc' : 'Cubit';
+          imports.add(
+              "import 'package:{{packageName}}/features/{{fileName}}/$stateDir/{{fileName}}_${smName.toLowerCase()}.dart';");
+          registration +=
+              '  sl.registerFactory(() => {{className}}$smName(sl()));\n';
+          break;
+        case StateManagement.provider:
+          imports.add(
+              "import 'package:{{packageName}}/features/{{fileName}}/providers/{{fileName}}_provider.dart';");
+          registration +=
+              '  sl.registerFactory(() => {{className}}Provider());\n';
+          break;
+        case StateManagement.getx:
+          imports.add(
+              "import 'package:{{packageName}}/features/{{fileName}}/controllers/{{fileName}}_controller.dart';");
+          registration +=
+              '  sl.registerFactory(() => {{className}}Controller());\n';
+          break;
+        case StateManagement.riverpod:
+          // Riverpod doesn't usually use GetIt
+          break;
+      }
+
+      // If MVVM architecture, we also need the ViewModel if not already covered
+      if (config.architecture == Architecture.mvvm &&
+          config.stateManagement != StateManagement.getx &&
+          config.stateManagement != StateManagement.bloc &&
+          config.stateManagement != StateManagement.cubit) {
+        if (!imports.contains(
+            "import 'package:{{packageName}}/features/{{fileName}}/view_models/{{fileName}}_view_model.dart';")) {
+          imports.add(
+              "import 'package:{{packageName}}/features/{{fileName}}/view_models/{{fileName}}_view_model.dart';");
+          registration +=
+              '  sl.registerFactory(() => {{className}}ViewModel(sl()));\n';
+        }
       }
     }
 

@@ -80,5 +80,42 @@ class {{className}}Binding extends Bindings {
     );
     BaseGenerator.writeFile(
         '$featurePath/bindings/${snakeName}_binding.dart', bindingContent);
+
+    // 3. Controller
+    final controllerContent = TemplateLoader.load(
+      'getx_controller',
+      defaultContent: '''
+import 'package:get/get.dart';
+import 'package:{{packageName}}/features/{{fileName}}/models/{{fileName}}_model.dart';
+
+class {{className}}Controller extends GetxController {
+  final isLoading = false.obs;
+  final errorMessage = ''.obs;
+  final data = Rxn<{{className}}Model>();
+
+  Future<void> loadData() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      // TODO: Implement actual data fetching
+      // final response = await Get.find<ApiClient>().dio.get('/{{fileName}}');
+      // data.value = {{className}}Model.fromJson(response.data);
+    } catch (e) {
+      errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}
+''',
+      replacements: {
+        '{{className}}': pascalName,
+        '{{fileName}}': snakeName,
+        '{{packageName}}': packageName,
+      },
+    );
+    BaseGenerator.writeFile(
+        '$featurePath/controllers/${snakeName}_controller.dart',
+        controllerContent);
   }
 }

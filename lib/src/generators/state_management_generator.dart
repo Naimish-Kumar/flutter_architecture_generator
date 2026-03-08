@@ -70,13 +70,20 @@ class StateManagementGenerator {
       depField = 'get${pascalName}UseCase';
       usageLine =
           'final data = await $depField();\n        emit(${pascalName}Loaded(data: data.id.toString()));';
+    } else if (config.architecture == Architecture.mvvm) {
+      blocImport =
+          "import 'package:$packageName/features/$snakeName/services/${snakeName}_service.dart';";
+      depType = '${pascalName}Service';
+      depField = 'service';
+      usageLine =
+          'final data = await $depField.fetch$pascalName();\n        emit(${pascalName}Loaded(data: data.id.toString()));';
     } else {
       blocImport =
           "import 'package:$packageName/features/$snakeName/repositories/${snakeName}_repository.dart';";
       depType = '${pascalName}Repository';
       depField = 'repository';
       usageLine =
-          'final data = await $depField.getData();\n        emit(${pascalName}Loaded(data: data.toString()));';
+          'final data = await $depField.getData();\n        emit(${pascalName}Loaded(data: data.id.toString()));';
     }
 
     final blocContent = TemplateLoader.load(
@@ -187,13 +194,20 @@ class {{className}}Error extends {{className}}State {
       depField = 'get${pascalName}UseCase';
       usageLine =
           'final data = await $depField();\n      emit(${pascalName}Loaded(data: data.id.toString()));';
+    } else if (config.architecture == Architecture.mvvm) {
+      cubitImport =
+          "import 'package:$packageName/features/$snakeName/services/${snakeName}_service.dart';";
+      depType = '${pascalName}Service';
+      depField = 'service';
+      usageLine =
+          'final data = await $depField.fetch$pascalName();\n      emit(${pascalName}Loaded(data: data.id.toString()));';
     } else {
       cubitImport =
           "import 'package:$packageName/features/$snakeName/repositories/${snakeName}_repository.dart';";
       depType = '${pascalName}Repository';
       depField = 'repository';
       usageLine =
-          'final data = await $depField.getData();\n      emit(${pascalName}Loaded(data: data.toString()));';
+          'final data = await $depField.getData();\n      emit(${pascalName}Loaded(data: data.id.toString()));';
     }
 
     final cubitContent = TemplateLoader.load(

@@ -56,6 +56,14 @@ library;
 ///
 /// Generates a StatelessWidget page and auto-registers it in the router.
 ///
+/// ### 5. Generate from API
+///
+/// ```bash
+/// flutter_arch_gen api Product --url https://fakestoreapi.com/products/1 --feature shop
+/// ```
+///
+/// Fetches JSON from the URL, creates a Model with inferred types, a Service, and a Repository.
+///
 /// ## Programmatic Usage
 ///
 /// You can also use the runner programmatically:
@@ -78,4 +86,14 @@ Future<void> main() async {
 
   // Example: Generate a standalone page
   await runner.run(['page', 'About']);
+
+  // Example: Generate from API
+  await runner.run([
+    'api',
+    'Product',
+    '--url',
+    'https://fakestoreapi.com/products/1',
+    '--feature',
+    'shop'
+  ]);
 }

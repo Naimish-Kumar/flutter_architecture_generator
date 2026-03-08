@@ -56,5 +56,46 @@ class {{className}}Model {
     );
     BaseGenerator.writeFile(
         '$featurePath/models/${snakeName}_model.dart', modelContent);
+
+    // 2. Provider
+    final providerContent = TemplateLoader.load(
+      'provider',
+      defaultContent: '''
+import 'package:flutter/material.dart';
+import 'package:{{packageName}}/features/{{fileName}}/models/{{fileName}}_model.dart';
+
+class {{className}}Provider extends ChangeNotifier {
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
+
+  String _errorMessage = '';
+  String get errorMessage => _errorMessage;
+
+  {{className}}Model? _data;
+  {{className}}Model? get data => _data;
+
+  Future<void> loadData() async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+    try {
+      // TODO: Implement actual data fetching
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+''',
+      replacements: {
+        '{{className}}': pascalName,
+        '{{fileName}}': snakeName,
+        '{{packageName}}': packageName,
+      },
+    );
+    BaseGenerator.writeFile(
+        '$featurePath/providers/${snakeName}_provider.dart', providerContent);
   }
 }

@@ -164,18 +164,15 @@ class ChatService {
         config.stateManagement == StateManagement.cubit;
     final isProvider = config.stateManagement == StateManagement.provider;
 
-    final stateRelDir = config.architecture == Architecture.clean
-        ? '${config.stateManagement.name}'
-        : config.getStateManagementDirectory();
-    final relativePrefix =
-        config.architecture == Architecture.mvvm ? '../../' : '../';
+    final modelsDir = config.getModelsDirectory();
+    final stateDir = config.getStateManagementDirectory();
 
     return '''
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-${isBloc ? "import 'package:flutter_bloc/flutter_bloc.dart';\nimport '$relativePrefix$stateRelDir/chat_bloc.dart';" : ""}
-${isProvider ? "import 'package:provider/provider.dart';\nimport '$relativePrefix$stateRelDir/chat_provider.dart';" : ""}
-import '../models/chat_message.dart';
+${isBloc ? "import 'package:flutter_bloc/flutter_bloc.dart';\nimport 'package:$packageName/features/chat/$stateDir/chat_bloc.dart';" : ""}
+${isProvider ? "import 'package:provider/provider.dart';\nimport 'package:$packageName/features/chat/$stateDir/chat_provider.dart';" : ""}
+import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';
 import 'package:$packageName/core/theme/app_theme.dart';
 
 class ChatPage extends StatefulWidget {
@@ -679,12 +676,13 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   /// Returns the content for the chat rooms list page.
-  static String chatRoomPageContent(String packageName) {
+  static String chatRoomPageContent(String packageName,
+      {String modelsDir = 'models'}) {
     return '''
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:$packageName/core/theme/app_theme.dart';
-import '../models/chat_message.dart';
+import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';
 import 'chat_page.dart';
 
 class ChatRoomsPage extends StatelessWidget {
@@ -840,13 +838,14 @@ class ChatRoomsPage extends StatelessWidget {
 
   /// Returns the content for the chat BLoC.
   static String chatBlocContent(
-      String packageName, String snakeName, String pascalName) {
+      String packageName, String snakeName, String pascalName,
+      {String modelsDir = 'models', String servicesDir = 'services'}) {
     return '''
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../models/chat_message.dart';
-import '../services/socket_service.dart';
-import '../services/chat_service.dart';
+import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';
+import 'package:$packageName/features/chat/$servicesDir/socket_service.dart';
+import 'package:$packageName/features/chat/$servicesDir/chat_service.dart';
 
 part 'chat_event.dart';
 part 'chat_state.dart';
@@ -1118,12 +1117,13 @@ class ChatMessageEntity {
   }
 
   /// Returns the content for the chat ViewModel/Provider.
-  static String chatViewModelProviderContent(String packageName) {
+  static String chatViewModelProviderContent(String packageName,
+      {String modelsDir = 'models', String servicesDir = 'services'}) {
     return '''
 import 'package:flutter/material.dart';
-import '../models/chat_message.dart';
-import '../services/chat_service.dart';
-import '../services/socket_service.dart';
+import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';
+import 'package:$packageName/features/chat/$servicesDir/chat_service.dart';
+import 'package:$packageName/features/chat/$servicesDir/socket_service.dart';
 
 class ChatProvider extends ChangeNotifier {
   final ChatService chatService;

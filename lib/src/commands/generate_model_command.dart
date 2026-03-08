@@ -62,16 +62,16 @@ class GenerateModelCommand extends Command<int> {
       defaultContent: '''
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-part '$fileName.freezed.dart';
-part '$fileName.g.dart';
+part '{{fileName}}.freezed.dart';
+part '{{fileName}}.g.dart';
 
 @freezed
-class $className with _\$$className {
-  const factory $className({
+class {{className}} with _\${{className}} {
+  const factory {{className}}({
     required int id,
-  }) = _$className;
+  }) = _{{className}};
 
-  factory $className.fromJson(Map<String, dynamic> json) => _\$${className}FromJson(json);
+  factory {{className}}.fromJson(Map<String, dynamic> json) => _\${{className}}FromJson(json);
 }
 ''',
       replacements: {

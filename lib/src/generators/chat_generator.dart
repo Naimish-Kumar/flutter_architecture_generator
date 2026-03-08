@@ -8,6 +8,7 @@ import '../utils/string_utils.dart';
 import 'base_generator.dart';
 import 'di_registrar.dart';
 import 'router_registrar.dart';
+import 'theme_generator.dart';
 
 /// A generator that scaffolds a complete real-time chat module.
 class ChatGenerator {
@@ -24,7 +25,10 @@ class ChatGenerator {
     final featurePath = p.join(baseDir, 'lib', 'features', snakeFeatureName);
     final packageName = PubspecHelper.getPackageName(baseDir: baseDir);
 
-    // 1. Add Dependencies
+    // 1. Generate premium theme with ChatThemeExtension
+    await ThemeGenerator.generate(baseDir: baseDir);
+
+    // 2. Add Dependencies
     PubspecHelper.addCustomDependencies({
       'socket_io_client': '^3.1.1',
       'intl': '^0.20.2',
@@ -79,12 +83,12 @@ class ChatGenerator {
     );
     BaseGenerator.writeFile(
       p.join(featurePath, pagesDir, 'chat_rooms_page.dart'),
-      ChatTemplates.chatRoomPageContent(packageName),
+      ChatTemplates.chatRoomPageContent(packageName, modelsDir: modelsDir),
     );
 
     // 6. Generate State Management
-    _generateStateManagement(
-        featurePath, featureName, config, packageName, stateDir);
+    _generateStateManagement(featurePath, featureName, config, packageName,
+        stateDir, modelsDir, servicesDir);
 
     // 7. Clean Architecture Specifics
     if (config.architecture == Architecture.clean) {
@@ -97,8 +101,14 @@ class ChatGenerator {
         baseDir: baseDir);
   }
 
-  static void _generateStateManagement(String featurePath, String featureName,
-      GeneratorConfig config, String packageName, String stateDir) {
+  static void _generateStateManagement(
+      String featurePath,
+      String featureName,
+      GeneratorConfig config,
+      String packageName,
+      String stateDir,
+      String modelsDir,
+      String servicesDir) {
     final pascalName = StringUtils.toPascalCase(featureName);
     final snakeName = StringUtils.toSnakeCase(featureName);
 
@@ -106,7 +116,8 @@ class ChatGenerator {
         config.stateManagement == StateManagement.cubit) {
       BaseGenerator.writeFile(
         p.join(featurePath, stateDir, 'chat_bloc.dart'),
-        ChatTemplates.chatBlocContent(packageName, snakeName, pascalName),
+        ChatTemplates.chatBlocContent(packageName, snakeName, pascalName,
+            modelsDir: modelsDir, servicesDir: servicesDir),
       );
       BaseGenerator.writeFile(
         p.join(featurePath, stateDir, 'chat_event.dart'),
@@ -119,7 +130,8 @@ class ChatGenerator {
     } else if (config.stateManagement == StateManagement.provider) {
       BaseGenerator.writeFile(
         p.join(featurePath, stateDir, 'chat_provider.dart'),
-        ChatTemplates.chatViewModelProviderContent(packageName),
+        ChatTemplates.chatViewModelProviderContent(packageName,
+            modelsDir: modelsDir, servicesDir: servicesDir),
       );
     }
     // TODO: Add Riverpod / GetX specific chat templates

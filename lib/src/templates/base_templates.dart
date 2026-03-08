@@ -59,13 +59,16 @@ void main() async {
   }
 
   /// Generates the content for `app.dart`.
+  /// Generates the content for `app.dart`.
   static String appContent(GeneratorConfig config, String packageName) {
     final useRouter = config.routing != Routing.navigator;
     final isRiverpod = config.stateManagement == StateManagement.riverpod;
     final isGetX = config.stateManagement == StateManagement.getx;
+    final isAutoRoute = config.routing == Routing.autoRoute;
 
-    final routerImport =
-        "import 'package:$packageName/routes/app_router.dart';";
+    final routerImport = useRouter
+        ? "import 'package:$packageName/routes/app_router.dart';"
+        : "import 'package:$packageName/core/constants/app_routes.dart';";
     final themeImport =
         "import 'package:$packageName/core/theme/app_theme.dart';";
     final riverpodImport = isRiverpod
@@ -76,19 +79,8 @@ void main() async {
         ? "import 'package:flutter_localizations/flutter_localizations.dart';"
         : '';
 
-    final isAutoRoute = config.routing == Routing.autoRoute;
-
-    String homeProp;
-    if (isAutoRoute) {
-      homeProp = 'routerConfig: _appRouter.config(),';
-    } else if (config.routing == Routing.goRouter) {
-      homeProp = 'routerConfig: router,';
-    } else {
-      homeProp =
-          'initialRoute: AppRoutes.home,\n      onGenerateRoute: AppRoutes.onGenerateRoute,';
-    }
-
-    final l10nConfig = config.localization
+    // Initialize variables for the Material App configuration
+    final String l10nConfig = config.localization
         ? '''
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -100,7 +92,21 @@ void main() async {
       ],'''
         : '';
 
-    final appClass = isGetX ? 'GetMaterialApp' : 'MaterialApp';
+    final routerField = useRouter ? '\n  final _appRouter = AppRouter();' : '';
+
+    String homeProp;
+    if (isAutoRoute) {
+      homeProp = 'routerConfig: _appRouter.config(),';
+    } else if (config.routing == Routing.goRouter) {
+      homeProp = 'routerConfig: _appRouter.router,';
+    } else {
+      homeProp =
+          'initialRoute: AppRoutes.home,\n      onGenerateRoute: AppRoutes.onGenerateRoute,';
+    }
+
+    // GetMaterialApp does NOT support .router() constructor,
+    // so fall back to regular MaterialApp.router when using a declarative router.
+    final appClass = (isGetX && !useRouter) ? 'GetMaterialApp' : 'MaterialApp';
 
     var materialApp = '''
     $appClass${useRouter ? '.router' : ''}(
@@ -117,9 +123,6 @@ void main() async {
       materialApp = 'ProviderScope(child: $materialApp)';
     }
 
-    final autoRouteField =
-        isAutoRoute ? '\n  final _appRouter = AppRouter();' : '';
-
     return TemplateLoader.load(
       'app',
       defaultContent: '''
@@ -132,7 +135,7 @@ import 'package:flutter/material.dart';
 
 class MyApp extends StatelessWidget {
   {{appConstructor}}
-  {{autoRouteField}}
+  {{routerField}}
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +150,7 @@ class MyApp extends StatelessWidget {
         '{{routerImport}}': routerImport,
         '{{themeImport}}': themeImport,
         '{{l10nImport}}': l10nImport,
-        '{{autoRouteField}}': autoRouteField,
+        '{{routerField}}': routerField,
         '{{materialApp}}': materialApp,
         '{{archName}}': config.architecture.displayName,
         '{{appConstructor}}':
@@ -423,6 +426,7 @@ output-localization-file: app_localizations.dart
 ''';
   }
 
+  /// Generates the content for the initial ARB localization file.
   static String arbContent(GeneratorConfig config) {
     return TemplateLoader.load(
       'arb',
@@ -465,6 +469,7 @@ void main() {
         'router_auto_route',
         defaultContent: '''
 import 'package:auto_route/auto_route.dart';
+part 'app_router.gr.dart';
 
 @AutoRouterConfig()
 class AppRouter extends _\$AppRouter {
@@ -483,17 +488,19 @@ class AppRouter extends _\$AppRouter {
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
-final router = GoRouter(
-  initialLocation: '/',
-  routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const Scaffold(
-        body: Center(child: Text('Home')),
+class AppRouter {
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Home')),
+        ),
       ),
-    ),
-  ],
-);
+    ],
+  );
+}
 ''',
         replacements: {},
       );

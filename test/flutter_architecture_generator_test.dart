@@ -485,8 +485,8 @@ void main() {
       );
     });
 
-    test('packageVersion is 1.2.0', () {
-      expect(packageVersion, '1.2.0');
+    test('packageVersion is 1.2.2', () {
+      expect(packageVersion, '1.2.2');
     });
   });
 }
