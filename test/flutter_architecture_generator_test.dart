@@ -30,11 +30,19 @@ void main() {
           'page',
           'widget',
           'service',
+          'repository',
+          'bloc',
+          'screen',
+          'api',
+          'theme',
+          'refactor',
           'delete',
           'update',
           'list',
           'doctor',
           'rename',
+          'migrate',
+          'undo',
         ]),
       );
     });
@@ -477,8 +485,8 @@ void main() {
       );
     });
 
-    test('packageVersion is 1.1.1', () {
-      expect(packageVersion, '1.1.1');
+    test('packageVersion is 1.2.0', () {
+      expect(packageVersion, '1.2.0');
     });
   });
 }

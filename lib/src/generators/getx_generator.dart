@@ -3,6 +3,7 @@
 /// Generates a feature following the GetX Architecture pattern
 /// with Models, Controllers, Bindings, and Views.
 library;
+
 import '../models/generator_config.dart';
 import '../utils/string_utils.dart';
 import 'base_generator.dart';

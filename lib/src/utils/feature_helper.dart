@@ -12,6 +12,7 @@ import '../generators/mvvm_generator.dart';
 import '../generators/bloc_generator.dart';
 import '../generators/getx_generator.dart';
 import '../generators/provider_generator.dart';
+import '../generators/chat_generator.dart';
 import '../utils/history_helper.dart';
 
 /// Helper class to generate features by delegating to the appropriate
@@ -25,6 +26,20 @@ class FeatureHelper {
     bool force = false,
     String? outputDir,
   }) async {
+    final snakeName = featureName.toLowerCase();
+
+    if (snakeName == 'chat') {
+      BaseGenerator.beginTracking();
+      await ChatGenerator.generate(
+        featureName,
+        config: config,
+        logger: logger,
+        force: force,
+        outputDir: outputDir,
+      );
+      return BaseGenerator.endTracking();
+    }
+
     final generator = _getGenerator(config.architecture);
     return generator.generateFeature(
       featureName,

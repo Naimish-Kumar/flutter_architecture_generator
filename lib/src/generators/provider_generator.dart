@@ -3,6 +3,7 @@
 /// Generates a feature following the Provider / Simple Architecture pattern
 /// with Models, Providers, and Pages.
 library;
+
 import '../models/generator_config.dart';
 import 'base_generator.dart';
 import '../utils/string_utils.dart';

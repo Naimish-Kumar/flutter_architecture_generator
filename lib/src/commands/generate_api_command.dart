@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:flutter_architecture_generator/src/utils/pubspec_helper.dart';
@@ -28,7 +29,7 @@ class GenerateApiCommand extends Command<int> {
     argParser.addOption(
       'output',
       abbr: 'o',
-      help: 'Custom output directory.',
+      help: 'Output directory for the feature.',
     );
     argParser.addOption(
       'config',
@@ -43,14 +44,14 @@ class GenerateApiCommand extends Command<int> {
     );
   }
 
-  final Logger _logger;
-
   @override
   String get name => 'api';
 
   @override
   String get description =>
-      'Generate Model + Repository + Service from an API endpoint or spec.';
+      'Generate Model + Repository + Service from an endpoint URL or spec.';
+
+  final Logger _logger;
 
   @override
   Future<int> run() async {
@@ -83,6 +84,11 @@ class GenerateApiCommand extends Command<int> {
       final snakeFeature = StringUtils.toSnakeCase(featureName);
       final packageName = PubspecHelper.getPackageName(baseDir: baseDir);
 
+      dynamic apiResponse;
+      if (url.startsWith('http')) {
+        apiResponse = await _fetchApiResponse(url);
+      }
+
       BaseGenerator.beginTracking();
 
       _generateApiFiles(
@@ -93,6 +99,7 @@ class GenerateApiCommand extends Command<int> {
         url,
         config,
         packageName,
+        apiResponse,
       );
 
       final actions = BaseGenerator.endTracking();
@@ -128,8 +135,18 @@ class GenerateApiCommand extends Command<int> {
     String url,
     GeneratorConfig config,
     String packageName,
+    dynamic apiResponse,
   ) {
     final featurePath = p.join(baseDir, 'lib', 'features', snakeFeature);
+
+    final fields = _inferFields(apiResponse);
+    final constructor = _inferConstructor(apiResponse);
+    final isList = apiResponse is List;
+    final returnType =
+        isList ? 'List<${pascalName}Model>' : '${pascalName}Model';
+    final fromJsonCall = isList
+        ? '(response.data as List).map((e) => ${pascalName}Model.fromJson(e as Map<String, dynamic>)).toList()'
+        : '${pascalName}Model.fromJson(response.data as Map<String, dynamic>)';
 
     // 1. Model
     final modelContent = TemplateLoader.load(
@@ -141,12 +158,10 @@ part '{{fileName}}_model.g.dart';
 
 @JsonSerializable()
 class {{className}}Model {
-  final int id;
-  final String? name;
+{{fields}}
 
   const {{className}}Model({
-    required this.id,
-    this.name,
+{{constructor}}
   });
 
   factory {{className}}Model.fromJson(Map<String, dynamic> json) =>
@@ -158,6 +173,8 @@ class {{className}}Model {
       replacements: {
         '{{className}}': pascalName,
         '{{fileName}}': snakeName,
+        '{{fields}}': fields,
+        '{{constructor}}': constructor,
       },
       baseDir: baseDir,
     );
@@ -175,10 +192,10 @@ class {{className}}Service {
 
   {{className}}Service(this._client);
 
-  Future<{{className}}Model> get{{className}}(int id) async {
+  Future<{{returnType}}> get{{className}}() async {
     try {
-      final response = await _client.get('$url/\$id');
-      return {{className}}Model.fromJson(response.data);
+      final response = await _client.get('{{url}}');
+      return {{fromJsonCall}};
     } catch (e) {
       rethrow;
     }
@@ -189,6 +206,9 @@ class {{className}}Service {
         '{{className}}': pascalName,
         '{{fileName}}': snakeName,
         '{{packageName}}': packageName,
+        '{{url}}': url,
+        '{{returnType}}': returnType,
+        '{{fromJsonCall}}': fromJsonCall,
       },
       baseDir: baseDir,
     );
@@ -205,14 +225,15 @@ class {{className}}Repository {
 
   {{className}}Repository(this._service);
 
-  Future<{{className}}Model> get{{className}}(int id) async {
-    return _service.get{{className}}(id);
+  Future<{{returnType}}> get{{className}}() async {
+    return _service.get{{className}}();
   }
 }
 ''',
       replacements: {
         '{{className}}': pascalName,
         '{{fileName}}': snakeName,
+        '{{returnType}}': returnType,
       },
       baseDir: baseDir,
     );
@@ -227,5 +248,85 @@ class {{className}}Repository {
         p.join(serviceDir, '${snakeName}_service.dart'), serviceContent);
     BaseGenerator.writeFile(
         p.join(repoDir, '${snakeName}_repository.dart'), repoContent);
+  }
+
+  Future<dynamic> _fetchApiResponse(String url) async {
+    final client = HttpClient();
+    String? token;
+
+    try {
+      while (true) {
+        final uri = Uri.parse(url);
+        final request = await client.getUrl(uri);
+
+        if (token != null) {
+          request.headers.set('Authorization', 'Bearer $token');
+        }
+
+        final response = await request.close();
+
+        if (response.statusCode == 200) {
+          final content = await response.transform(utf8.decoder).join();
+          return json.decode(content);
+        } else if (response.statusCode == 401 || response.statusCode == 403) {
+          _logger.info('🔒 API requires authorization.');
+          token = _logger.prompt('Enter Authorization Token:');
+          if (token.isEmpty) {
+            throw 'Authorization required but no token provided.';
+          }
+          continue; // Retry with token
+        } else {
+          throw 'API returned status code ${response.statusCode}: ${response.reasonPhrase}';
+        }
+      }
+    } finally {
+      client.close();
+    }
+  }
+
+  String _inferFields(dynamic json) {
+    if (json is List) {
+      if (json.isEmpty) return '  final List<dynamic>? items;';
+      return _inferFields(json.first);
+    }
+    if (json is! Map) return '  final dynamic value;';
+
+    final buffer = StringBuffer();
+    json.forEach((key, value) {
+      final type = _getDartType(value);
+      final fieldName = StringUtils.toCamelCase(key.toString());
+      buffer.writeln('  final $type? $fieldName;');
+    });
+    return buffer.toString();
+  }
+
+  String _getDartType(dynamic value) {
+    if (value == null) return 'dynamic';
+    if (value is int) return 'int';
+    if (value is double) return 'double';
+    if (value is bool) return 'bool';
+    if (value is String) return 'String';
+    if (value is List) {
+      if (value.isEmpty) return 'List<dynamic>';
+      final firstType = _getDartType(value.first);
+      return 'List<$firstType>';
+    }
+    if (value is Map) return 'Map<String, dynamic>';
+    return 'dynamic';
+  }
+
+  String _inferConstructor(dynamic json) {
+    if (json is List) {
+      if (json.isEmpty) return '    this.items,';
+      return _inferConstructor(json.first);
+    }
+    if (json is! Map) return '    this.value,';
+
+    final buffer = StringBuffer();
+    for (final key in json.keys) {
+      final fieldName = StringUtils.toCamelCase(key.toString());
+      buffer.writeln('    this.$fieldName,');
+    }
+    return buffer.toString();
   }
 }

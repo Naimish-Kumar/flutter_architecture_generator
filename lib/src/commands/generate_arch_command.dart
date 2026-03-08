@@ -92,16 +92,48 @@ class GenerateArchCommand extends Command<int> {
     final dryRun = argResults?['dry-run'] == true;
     final force = argResults?['force'] == true;
 
+    // Interactive Prompts if no specific flags are passed (and not in dry run)
+    Architecture arch = Architecture.values.firstWhere(
+        (e) => e.name == argResults?['arch'],
+        orElse: () => Architecture.clean);
+
+    StateManagement state = StateManagement.values.firstWhere(
+        (e) => e.name == argResults?['state'],
+        orElse: () => StateManagement.bloc);
+
+    Routing routing = Routing.values.firstWhere(
+        (e) => e.name == argResults?['routing'],
+        orElse: () => Routing.goRouter);
+
+    final bool isInteractive = argResults?.command == null &&
+        argResults?.options.every((opt) => !argResults!.wasParsed(opt)) == true;
+
+    if (isInteractive && !dryRun) {
+      _logger.info('🎨 Welcome to Flutter Architecture Generator!');
+
+      arch = _logger.chooseOne<Architecture>(
+        'Choose your architecture pattern:',
+        choices: Architecture.values,
+        display: (a) => a.name.toUpperCase(),
+      );
+
+      state = _logger.chooseOne<StateManagement>(
+        'Which state management do you prefer?',
+        choices: StateManagement.values,
+        display: (s) => s.name.toUpperCase(),
+      );
+
+      routing = _logger.chooseOne<Routing>(
+        'Which routing strategy would you like?',
+        choices: Routing.values,
+        display: (r) => r.name,
+      );
+    }
+
     final config = GeneratorConfig(
-      architecture: Architecture.values.firstWhere(
-          (e) => e.name == argResults?['arch'],
-          orElse: () => Architecture.clean),
-      stateManagement: StateManagement.values.firstWhere(
-          (e) => e.name == argResults?['state'],
-          orElse: () => StateManagement.bloc),
-      routing: Routing.values.firstWhere(
-          (e) => e.name == argResults?['routing'],
-          orElse: () => Routing.goRouter),
+      architecture: arch,
+      stateManagement: state,
+      routing: routing,
       localization: argResults?['localization'] == true,
       firebase: argResults?['firebase'] == true,
       tests: argResults?['tests'] == true,

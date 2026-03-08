@@ -32,6 +32,8 @@ class RouterRegistrar {
 
     if (name == 'auth') {
       _registerAuthRoutes(routerPath, config, importPath);
+    } else if (name == 'chat') {
+      _registerChatRoutes(routerPath, config, importPath, packageName);
     } else {
       if (config.routing == Routing.autoRoute) {
         _registerAutoRoute(routerPath, name, importPath);
@@ -39,6 +41,51 @@ class RouterRegistrar {
         _registerGoRoute(routerPath, name, importPath);
       }
     }
+  }
+
+  static void _registerChatRoutes(String routerPath, GeneratorConfig config,
+      String importPath, String packageName) {
+    final routerFile = File(routerPath);
+    String contents = routerFile.readAsStringSync();
+
+    final modelsDir = config.getModelsDirectory();
+    final roomsImport = "import '${importPath}chat_rooms_page.dart';";
+    final chatImport = "import '${importPath}chat_page.dart';";
+    final modelImport =
+        "import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';";
+
+    if (!contents.contains(roomsImport)) contents = '$roomsImport\n$contents';
+    if (!contents.contains(chatImport)) contents = '$chatImport\n$contents';
+    if (!contents.contains(modelImport)) contents = '$modelImport\n$contents';
+
+    if (config.routing == Routing.goRouter) {
+      const chatRoutes = '''
+    GoRoute(
+      path: '/chat-rooms',
+      builder: (context, state) => const ChatRoomsPage(),
+    ),
+    GoRoute(
+      path: '/chat',
+      builder: (context, state) {
+        final room = state.extra as ChatRoom;
+        return ChatPage(room: room);
+      },
+    ),
+''';
+      if (!contents.contains("path: '/chat-rooms'")) {
+        contents = contents.replaceFirst('routes: [', 'routes: [\n$chatRoutes');
+      }
+    } else if (config.routing == Routing.autoRoute) {
+      const chatRoutes = '''
+      AutoRoute(page: ChatRoomsRoute.page),
+      AutoRoute(page: ChatRoute.page),
+''';
+      if (!contents.contains('ChatRoomsRoute.page')) {
+        contents = contents.replaceFirst('List<AutoRoute> get routes => [',
+            'List<AutoRoute> get routes => [\n$chatRoutes');
+      }
+    }
+    BaseGenerator.writeFile(routerPath, contents);
   }
 
   static void _registerAuthRoutes(

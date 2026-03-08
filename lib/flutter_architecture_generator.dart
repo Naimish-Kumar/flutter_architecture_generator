@@ -25,9 +25,11 @@ import 'src/commands/migrate_command.dart';
 import 'src/commands/undo_command.dart';
 import 'src/commands/generate_screen_command.dart';
 import 'src/commands/generate_api_command.dart';
+import 'src/commands/generate_theme_command.dart';
+import 'src/commands/refactor_command.dart';
 
 /// The current version of the Flutter Architecture Generator.
-const String packageVersion = '1.1.1';
+const String packageVersion = '1.2.0';
 
 /// The command runner for the Flutter Architecture Generator CLI.
 ///
@@ -60,6 +62,8 @@ class FlutterArchGenRunner extends CommandRunner<int> {
     addCommand(GenerateBlocCommand(logger: _logger));
     addCommand(GenerateScreenCommand(logger: _logger));
     addCommand(GenerateApiCommand(logger: _logger));
+    addCommand(GenerateThemeCommand(logger: _logger));
+    addCommand(RefactorCommand(logger: _logger));
 
     // Utility commands
     addCommand(UndoCommand(logger: _logger));

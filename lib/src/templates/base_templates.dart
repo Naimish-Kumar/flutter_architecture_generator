@@ -191,14 +191,118 @@ class ApiClient {
   final Dio dio;
 
   ApiClient(this.dio) {
-    dio.options.baseUrl = dotenv.env['API_BASE_URL'] ?? 'https://api.example.com';
+    dio.options.baseUrl =
+        dotenv.env['API_BASE_URL'] ?? 'https://api.example.com';
     dio.options.connectTimeout = const Duration(seconds: 5);
     dio.options.receiveTimeout = const Duration(seconds: 3);
-    
+
     dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,
     ));
+  }
+
+  // GET Method
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await dio.get(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  // POST Method
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await dio.post(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  // PUT Method
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await dio.put(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  // DELETE Method
+  Future<Response> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await dio.delete(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  // PATCH Method
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await dio.patch(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  // Multipart/Form-data Method
+  Future<Response> postMultipart(
+    String path, {
+    required Map<String, dynamic> data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    void Function(int, int)? onSendProgress,
+  }) async {
+    final formData = FormData.fromMap(data);
+    return await dio.post(
+      path,
+      data: formData,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+    );
   }
 }
 ''',

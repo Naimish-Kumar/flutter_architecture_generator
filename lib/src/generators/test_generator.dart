@@ -2,6 +2,7 @@
 ///
 /// Generates architecture-appropriate test files for each feature.
 library;
+
 import '../models/generator_config.dart';
 import '../utils/string_utils.dart';
 import 'base_generator.dart';

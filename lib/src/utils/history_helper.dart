@@ -4,7 +4,6 @@ import 'package:path/path.dart' as p;
 
 /// Represents a single file action in history.
 class FileAction {
-
   /// Creates a [FileAction].
   FileAction({
     required this.path,
@@ -20,6 +19,7 @@ class FileAction {
         oldContent: json['oldContent'] as String?,
         newContent: json['newContent'] as String?,
       );
+
   /// The path of the file.
   final String path;
 
@@ -43,7 +43,6 @@ class FileAction {
 
 /// Represents a history entry for a command execution.
 class HistoryEntry {
-
   /// Creates a [HistoryEntry].
   HistoryEntry({
     required this.timestamp,
@@ -59,6 +58,7 @@ class HistoryEntry {
             .map((a) => FileAction.fromJson(a as Map<String, dynamic>))
             .toList(),
       );
+
   /// The time the command was executed.
   final DateTime timestamp;
 

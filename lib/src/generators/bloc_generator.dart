@@ -3,6 +3,7 @@
 /// Generates a feature following the BLoC Architecture pattern
 /// with Models, Repositories, Bloc, and Pages.
 library;
+
 import '../models/generator_config.dart';
 import '../utils/string_utils.dart';
 import 'base_generator.dart';

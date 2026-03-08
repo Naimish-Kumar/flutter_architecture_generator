@@ -161,6 +161,26 @@ class PubspecHelper {
     }
   }
 
+  /// Adds custom dependencies to `pubspec.yaml`.
+  static void addCustomDependencies(Map<String, dynamic> dependencies,
+      {String? baseDir}) {
+    final path =
+        baseDir != null ? p.join(baseDir, 'pubspec.yaml') : 'pubspec.yaml';
+    final file = File(path);
+    if (!file.existsSync()) return;
+
+    final contents = file.readAsStringSync();
+    final editor = YamlEditor(contents);
+
+    _ensureMap(editor, 'dependencies');
+
+    for (var entry in dependencies.entries) {
+      _addDependency(editor, 'dependencies', entry.key, entry.value);
+    }
+
+    BaseGenerator.writeFile(path, editor.toString());
+  }
+
   static void _ensureMap(YamlEditor editor, String key) {
     try {
       final node = editor.parseAt([key]);

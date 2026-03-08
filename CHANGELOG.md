@@ -1,3 +1,23 @@
+## 1.2.0
+
+### 🚀 Generator Core Improvements
+- **Interactive CLI Prompts**: `init` command now uses high-end interactive selection for architecture and state management if flags are omitted.
+- **Smart Code Refactoring**: New `refactor model` command to safely inject fields into existing Freezed models without overwriting logic.
+
+### 🎨 Design System & Theming
+- **Theme Generator**: New `theme` command to generate a full premium Design System with Dark/Light mode, semantic tokens, and HSL gradients.
+- **Theme Extensions**: Specialized tokens for Chat and components now part of the default generated theme.
+
+### 💬 Professional Chat Module
+- **Socket.io Pro**: Resilient real-time engine with connection status, auth tokens, and dedicated event pipelines.
+- **Message Lifecycle**: Full status tick system (Sending -> Sent -> Delivered -> Read).
+- **Typing Indicators**: Real-time "Typing..." feedback in AppBar and Message List.
+- **Threaded Replies**: Native swipe-to-reply logic with quoted context UI.
+
+### 📚 Documentation & Community
+- **Documentation Portal**: Full overhaul with deep-dive guides for all core modules.
+- **Support**: Added community support link ("Buy Me A Coffee").
+
 ## 1.1.1
 
 ### 🏗️ Major Refactoring & Transactional Engine
