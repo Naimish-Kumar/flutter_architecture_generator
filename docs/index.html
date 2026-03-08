@@ -42,7 +42,8 @@
                 <p>The most powerful CLI tool to scaffold professional Flutter projects. From Clean Architecture to
                     real-time Chat modules, generate production-ready code in seconds.</p>
                 <div class="hero-actions">
-                    <button class="btn btn-glow" onclick="scrollToSection('commands')">Get Started</button>
+                    <button class="btn btn-glow" onclick="scrollToSection('commands')" style="width: 150px;">Get
+                        Started</button>
                     <div class="command-pills">
                         <code>dart pub global activate flutter_architecture_generator</code>
                         <button class="copy-btn" onclick="copyInstallCommand()"><i class="ph ph-copy"></i></button>
@@ -88,20 +89,23 @@
                 <p>Streamline your workflow from initialization to final polish.</p>
             </div>
             <div class="how-it-works">
-                <div class="step">
+                <div class="step glass-panel">
                     <div class="step-num">01</div>
+                    <div class="step-icon"><i class="ph ph-gear-six"></i></div>
                     <h3>Initialize</h3>
                     <p>Run <code>init</code> to scaffold your project foundation with your selected architecture and
                         routing.</p>
                 </div>
-                <div class="step">
+                <div class="step glass-panel">
                     <div class="step-num">02</div>
+                    <div class="step-icon"><i class="ph ph-layout"></i></div>
                     <h3>Build Feature</h3>
                     <p>Use <code>feature</code> to generate all layers instantly. Dependencies are auto-wired for you.
                     </p>
                 </div>
-                <div class="step">
+                <div class="step glass-panel">
                     <div class="step-num">03</div>
+                    <div class="step-icon"><i class="ph ph-rocket-launch"></i></div>
                     <h3>Refine & Deploy</h3>
                     <p>Fine-tune with <code>model</code> and <code>theme</code> commands. You're ready for production!
                     </p>
@@ -143,6 +147,51 @@
             </div>
         </section>
 
+        <!-- Chat Feature Spotlight -->
+        <section class="section spotlight-section">
+            <div class="spotlight-container">
+                <div class="spotlight-visual">
+                    <div class="chat-mockup">
+                        <div class="chat-header">
+                            <div class="chat-user">
+                                <span class="status-dot"></span>
+                                <div>
+                                    <h4>Real-time Chat</h4>
+                                    <p>Online</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-body">
+                            <div class="msg received">How's the new architecture?</div>
+                            <div class="msg sent">Scaling perfectly. Just generated it!</div>
+                            <div class="msg received">The Socket.io integration is smooth.</div>
+                            <div class="msg sent">And the BLoC state management makes it reactive.</div>
+                            <div class="typing-indicator"><span></span><span></span><span></span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="spotlight-text">
+                    <div class="badge">Feature Spotlight</div>
+                    <h2>Production-Ready <span class="gradient-text">Chat Module</span></h2>
+                    <p>Generate a complete real-time communication system in one command. Our chat module isn't just a
+                        UI—it's a fully-integrated architectural powerhouse.</p>
+                    <ul class="spotlight-list">
+                        <li><i class="ph-fill ph-broadcast"></i> <strong>Socket.io Integration:</strong> Auto-configured
+                            real-time event handling.</li>
+                        <li><i class="ph-fill ph-database"></i> <strong>Persistence Ready:</strong> Designed for easy
+                            local DB integration.</li>
+                        <li><i class="ph-fill ph-tree-structure"></i> <strong>Clean Architecture:</strong> Domain, Data,
+                            and Presentation layers auto-wired.</li>
+                        <li><i class="ph-fill ph-lightning"></i> <strong>Optimistic Updates:</strong> Smooth UX with
+                            instant message feedback.</li>
+                    </ul>
+                    <div class="code-pill">
+                        <code>flutter_arch_gen feature chat</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Command Highlight -->
         <section class="section">
             <div class="command-highlight">
@@ -170,9 +219,9 @@
             </div>
         </section>
         <section id="commands" class="section bg-alt">
-            <div class="section-header">
+            <div class="section-header" style="margin-top: 60px;">
                 <h2>Command <span class="gradient-text">Reference</span></h2>
-                <p>Complete control at your fingertips.</p>
+                <p>Complete control at your fingertips. Discover every flag and option available.</p>
             </div>
 
             <div class="command-explorer">
