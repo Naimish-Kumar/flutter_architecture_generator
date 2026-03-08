@@ -56,7 +56,7 @@ import 'package:$packageName/features/$snakeName/models/${snakeName}_model.dart'
 
 class ${pascalName}Repository {
   final ApiClient apiClient;
-  ${pascalName}Repository(this.apiClient);
+  ${pascalName}Repository(this.apiClient) {}
 
   Future<${pascalName}Model> getData() async {
     final response = await apiClient.dio.get('/$snakeName');

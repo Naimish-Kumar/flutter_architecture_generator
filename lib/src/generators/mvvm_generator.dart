@@ -70,7 +70,7 @@ import 'package:{{packageName}}/features/{{fileName}}/models/{{fileName}}_model.
 
 class {{className}}Service {
   final ApiClient apiClient;
-  {{className}}Service(this.apiClient);
+  {{className}}Service(this.apiClient) {}
 
   Future<{{className}}Model> fetch{{className}}() async {
     final response = await apiClient.dio.get('/{{fileName}}');
@@ -93,7 +93,7 @@ import 'package:{{packageName}}/features/{{fileName}}/models/{{fileName}}_model.
 
 class {{className}}ViewModel extends ChangeNotifier {
   final {{className}}Service service;
-  {{className}}ViewModel(this.service);
+  {{className}}ViewModel(this.service) {}
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

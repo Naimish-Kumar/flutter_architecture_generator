@@ -85,7 +85,7 @@ import 'package:{{packageName}}/features/{{fileName}}/domain/entities/{{fileName
 class Get{{className}}UseCase {
   final I{{className}}Repository repository;
 
-  Get{{className}}UseCase(this.repository);
+  Get{{className}}UseCase(this.repository) {}
 
   Future<{{className}}Entity> call() async {
     return await repository.get{{className}}Data();
@@ -131,7 +131,7 @@ import 'package:{{packageName}}/core/errors/failures.dart';
 class {{className}}RepositoryImpl implements I{{className}}Repository {
   final I{{className}}RemoteDataSource remoteDataSource;
 
-  {{className}}RepositoryImpl(this.remoteDataSource);
+  {{className}}RepositoryImpl(this.remoteDataSource) {}
 
   @override
   Future<{{className}}Entity> get{{className}}Data() async {
@@ -163,7 +163,7 @@ abstract class I{{className}}RemoteDataSource {
 class {{className}}RemoteDataSourceImpl implements I{{className}}RemoteDataSource {
   final ApiClient apiClient;
 
-  {{className}}RemoteDataSourceImpl(this.apiClient);
+  {{className}}RemoteDataSourceImpl(this.apiClient) {}
 
   @override
   Future<{{className}}Model> get{{className}}FromApi() async {

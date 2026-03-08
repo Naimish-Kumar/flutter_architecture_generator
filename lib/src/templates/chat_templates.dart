@@ -164,11 +164,17 @@ class ChatService {
         config.stateManagement == StateManagement.cubit;
     final isProvider = config.stateManagement == StateManagement.provider;
 
+    final stateRelDir = config.architecture == Architecture.clean
+        ? '${config.stateManagement.name}'
+        : config.getStateManagementDirectory();
+    final relativePrefix =
+        config.architecture == Architecture.mvvm ? '../../' : '../';
+
     return '''
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-${isBloc ? "import 'package:flutter_bloc/flutter_bloc.dart';\nimport '../state/chat_bloc.dart';" : ""}
-${isProvider ? "import 'package:provider/provider.dart';\nimport '../state/chat_provider.dart';" : ""}
+${isBloc ? "import 'package:flutter_bloc/flutter_bloc.dart';\nimport '$relativePrefix$stateRelDir/chat_bloc.dart';" : ""}
+${isProvider ? "import 'package:provider/provider.dart';\nimport '$relativePrefix$stateRelDir/chat_provider.dart';" : ""}
 import '../models/chat_message.dart';
 import 'package:$packageName/core/theme/app_theme.dart';
 

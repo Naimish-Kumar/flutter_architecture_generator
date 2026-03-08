@@ -207,7 +207,7 @@ part '${snakeName}_state.dart';
 
 class ${pascalName}Cubit extends Cubit<${pascalName}State> {
   final $depType $depField;
-  ${pascalName}Cubit(this.$depField) : super(${pascalName}Initial());
+  ${pascalName}Cubit(this.$depField) : super(${pascalName}Initial()) {}
 
   Future<void> fetchData() async {
     emit(${pascalName}Loading());
