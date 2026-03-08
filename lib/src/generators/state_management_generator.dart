@@ -276,7 +276,7 @@ class ${pascalName}Error extends ${pascalName}State {
       defaultContent: '''
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final \${camelName}Provider = FutureProvider<String>((ref) async {
+final {{camelName}}Provider = FutureProvider<String>((ref) async {
   // TODO: Replace with actual data fetching logic.
   return 'Initial Data';
 });

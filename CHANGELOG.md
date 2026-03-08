@@ -1,3 +1,9 @@
+## 1.2.2
+
+### 🐞 Bug Fixes
+- **Template Interpolation**: Fixed syntax errors in generated Use Cases and Riverpod providers caused by incorrect string escaping in templates.
+- **Base Architecture**: Resolved "const" and "title" interpolation errors in the base `app.dart` and `main.dart` files.
+
 ## 1.2.1
 
 ### 📦 Automated Dependency Management
@@ -6,8 +12,6 @@
 - **Plan Preview**: Dependency changes are now included in the execution plan for review before applying.
 
 ## 1.2.0
-
-### 🚀 Generator Core Improvements
 - **Interactive CLI Prompts**: `init` command now uses high-end interactive selection for architecture and state management if flags are omitted.
 - **Smart Code Refactoring**: New `refactor model` command to safely inject fields into existing Freezed models without overwriting logic.
 

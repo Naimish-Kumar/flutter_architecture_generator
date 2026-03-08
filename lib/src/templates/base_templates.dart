@@ -103,7 +103,7 @@ void main() async {
 
     var materialApp = '''
     $appClass${useRouter ? '.router' : ''}(
-      title: 'Flutter \${config.architecture.displayName}',
+      title: 'Flutter ${config.architecture.displayName}',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -130,7 +130,7 @@ $themeImport
 $l10nImport
 
 class MyApp extends StatelessWidget {
-  \${isAutoRoute ? '' : 'const '}MyApp({super.key});
+  ${isAutoRoute ? '' : 'const '}MyApp({super.key});
   $autoRouteField
 
   @override
@@ -424,7 +424,7 @@ output-localization-file: app_localizations.dart
     return '''
 {
   "@@locale": "en",
-  "appTitle": "Flutter \${config.architecture.displayName}",
+  "appTitle": "Flutter ${config.architecture.displayName}",
   "@appTitle": {
     "description": "The title of the application"
   }
@@ -526,7 +526,7 @@ class AppRoutes {
       'constants',
       defaultContent: '''
 class AppConstants {
-  static const String appName = 'Flutter \${config.architecture.displayName}';
+  static const String appName = 'Flutter ${config.architecture.displayName}';
 }
 ''',
       replacements: {},

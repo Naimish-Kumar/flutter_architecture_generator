@@ -1068,9 +1068,9 @@ class ChatRepositoryImpl implements IChatRepository {
 import '../../data/models/chat_message.dart';
 import '../repositories/chat_repository.dart';
 
-class \${name}UseCase {
+class ${useCaseName}UseCase {
   final IChatRepository repository;
-  \${name}UseCase(this.repository);
+  ${useCaseName}UseCase(this.repository);
 
   Future<List<ChatMessage>> call(String roomId, int page) => 
     repository.getMessages(roomId, page);
