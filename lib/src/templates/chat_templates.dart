@@ -136,7 +136,7 @@ import '../models/chat_message.dart';
 class ChatService {
   final ApiClient _client;
 
-  ChatService(this._client);
+  ChatService(this._client) {}
 
   Future<List<ChatRoom>> getChatRooms() async {
     final response = await _client.get('/chat/rooms');
@@ -1050,7 +1050,7 @@ import '../services/chat_service.dart';
 
 class ChatRepositoryImpl implements IChatRepository {
   final ChatService chatService;
-  ChatRepositoryImpl(this.chatService);
+  ChatRepositoryImpl(this.chatService) {}
 
   @override
   Future<List<ChatRoom>> getChatRooms() => chatService.getChatRooms();
@@ -1070,7 +1070,7 @@ import '../repositories/chat_repository.dart';
 
 class ${useCaseName}UseCase {
   final IChatRepository repository;
-  ${useCaseName}UseCase(this.repository);
+  ${useCaseName}UseCase(this.repository) {}
 
   Future<List<ChatMessage>> call(String roomId, int page) => 
     repository.getMessages(roomId, page);
@@ -1106,7 +1106,7 @@ class ChatMessageEntity {
     required this.timestamp,
     this.parentMessageId,
     this.parentMessageContent,
-  });
+  }) {}
 }
 ''';
   }
@@ -1123,7 +1123,7 @@ class ChatProvider extends ChangeNotifier {
   final ChatService chatService;
   final SocketService socketService;
 
-  ChatProvider({required this.chatService, required this.socketService});
+  ChatProvider({required this.chatService, required this.socketService}) {}
 
   List<ChatMessage> _messages = [];
   List<ChatMessage> get messages => _messages;

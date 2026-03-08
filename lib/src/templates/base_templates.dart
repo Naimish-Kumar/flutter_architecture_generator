@@ -130,7 +130,7 @@ $themeImport
 $l10nImport
 
 class MyApp extends StatelessWidget {
-  ${isAutoRoute ? '' : 'const '}MyApp({super.key});
+  ${isAutoRoute ? 'MyApp({super.key}) {}' : 'const MyApp({super.key});'}
   $autoRouteField
 
   @override
