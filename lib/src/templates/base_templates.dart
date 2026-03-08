@@ -103,7 +103,7 @@ void main() async {
 
     var materialApp = '''
     $appClass${useRouter ? '.router' : ''}(
-      title: 'Flutter ${config.architecture.displayName}',
+      title: 'Flutter {{archName}}',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -148,6 +148,7 @@ class MyApp extends StatelessWidget {
         '{{l10nImport}}': l10nImport,
         '{{autoRouteField}}': autoRouteField,
         '{{materialApp}}': materialApp,
+        '{{archName}}': config.architecture.displayName,
       },
     );
   }
@@ -419,17 +420,22 @@ output-localization-file: app_localizations.dart
 ''';
   }
 
-  /// Generates the content for the ARB localization file.
   static String arbContent(GeneratorConfig config) {
-    return '''
+    return TemplateLoader.load(
+      'arb',
+      defaultContent: '''
 {
   "@@locale": "en",
-  "appTitle": "Flutter ${config.architecture.displayName}",
+  "appTitle": "Flutter {{archName}}",
   "@appTitle": {
     "description": "The title of the application"
   }
 }
-''';
+''',
+      replacements: {
+        '{{archName}}': config.architecture.displayName,
+      },
+    );
   }
 
   /// Generates the content for `sample_test.dart`.
@@ -526,10 +532,12 @@ class AppRoutes {
       'constants',
       defaultContent: '''
 class AppConstants {
-  static const String appName = 'Flutter ${config.architecture.displayName}';
+  static const String appName = 'Flutter {{archName}}';
 }
 ''',
-      replacements: {},
+      replacements: {
+        '{{archName}}': config.architecture.displayName,
+      },
     );
   }
 

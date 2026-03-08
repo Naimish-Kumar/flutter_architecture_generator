@@ -1,3 +1,9 @@
+## 1.2.4
+
+### 🐞 Bug Fixes
+- **Template Placeholders**: Replaced direct Dart string interpolation with explicit `{{archName}}` placeholders in `app.dart`, `app_constant.dart`, and `app_en.arb` to ensure reliable code generation and support for custom templates.
+- **Undefined Name 'config'**: Fixed a critical error where some generated files would literally contain the variable name `config` instead of its value.
+
 ## 1.2.3
 
 ### 🐞 Bug Fixes
