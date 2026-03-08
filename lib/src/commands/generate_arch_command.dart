@@ -9,6 +9,8 @@ import '../models/generator_config.dart';
 import '../utils/file_helper.dart';
 import '../utils/template_loader.dart';
 import '../utils/feature_helper.dart';
+import '../utils/pubspec_helper.dart';
+import '../generators/base_generator.dart';
 
 /// The `init` command.
 class GenerateArchCommand extends Command<int> {
@@ -156,7 +158,12 @@ class GenerateArchCommand extends Command<int> {
         outputDir: outputDir,
       );
 
-      final allActions = [...baseActions, ...featureActions];
+      // Track pubspec changes
+      BaseGenerator.beginTracking();
+      await PubspecHelper.addDependencies(config, baseDir: outputDir);
+      final pubspecActions = BaseGenerator.endTracking();
+
+      final allActions = [...baseActions, ...featureActions, ...pubspecActions];
 
       FileHelper.renderPlan(allActions, _logger, baseDir: outputDir);
 

@@ -1,3 +1,10 @@
+## 1.2.1
+
+### 📦 Automated Dependency Management
+- **Smart Pubspec Updates**: Project initialization and feature generation now automatically add required dependencies to `pubspec.yaml`.
+- **Automatic Cleanup**: Deleting features (like the Chat module) now automatically removes their specific dependencies from `pubspec.yaml`.
+- **Plan Preview**: Dependency changes are now included in the execution plan for review before applying.
+
 ## 1.2.0
 
 ### 🚀 Generator Core Improvements

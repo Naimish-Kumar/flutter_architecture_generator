@@ -4,6 +4,7 @@ import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 import '../utils/string_utils.dart';
 import '../utils/file_helper.dart';
+import '../utils/pubspec_helper.dart';
 import '../generators/base_generator.dart';
 
 /// The `delete` command — removes a feature and its registrations.
@@ -65,6 +66,9 @@ class DeleteFeatureCommand extends Command<int> {
     _cleanUpDI(baseDir, snakeName, pascalName);
     _cleanUpRouter(baseDir, snakeName, pascalName, config);
 
+    // 4. Clean up dependencies if it's a special feature
+    _cleanUpDependencies(baseDir, snakeName);
+
     final actions = BaseGenerator.endTracking();
     FileHelper.renderPlan(actions, _logger, baseDir: baseDir);
 
@@ -93,6 +97,23 @@ class DeleteFeatureCommand extends Command<int> {
       if (entity is File) {
         BaseGenerator.deleteFile(entity.path);
       }
+    }
+  }
+
+  void _cleanUpDependencies(String baseDir, String snakeName) {
+    final featurePath = p.join(baseDir, 'lib', 'features', snakeName);
+
+    // Check if it's a chat feature (has socket_service.dart or chat_service.dart)
+    final hasChatFiles =
+        Directory(p.join(featurePath, 'services')).existsSync() &&
+            (File(p.join(featurePath, 'services', 'chat_service.dart'))
+                    .existsSync() ||
+                File(p.join(featurePath, 'services', 'socket_service.dart'))
+                    .existsSync());
+
+    if (snakeName == 'chat' || hasChatFiles) {
+      PubspecHelper.removeCustomDependencies(['socket_io_client'],
+          baseDir: baseDir);
     }
   }
 

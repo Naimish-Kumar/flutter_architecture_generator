@@ -144,6 +144,60 @@ class PubspecHelper {
     BaseGenerator.writeFile(path, editor.toString());
   }
 
+  /// Removes dependencies from `pubspec.yaml` based on [config].
+  static Future<void> removeDependencies(GeneratorConfig config,
+      {String? baseDir}) async {
+    final path =
+        baseDir != null ? p.join(baseDir, 'pubspec.yaml') : 'pubspec.yaml';
+    final file = File(path);
+    if (!file.existsSync()) return;
+
+    final contents = file.readAsStringSync();
+    final editor = YamlEditor(contents);
+
+    final depsToRemove = <String>[];
+    final devDepsToRemove = <String>[];
+
+    // State management dependencies
+    switch (config.stateManagement) {
+      case StateManagement.bloc:
+      case StateManagement.cubit:
+        depsToRemove.addAll(['flutter_bloc', 'equatable']);
+        break;
+      case StateManagement.riverpod:
+        depsToRemove.add('flutter_riverpod');
+        break;
+      case StateManagement.provider:
+        depsToRemove.add('provider');
+        break;
+      case StateManagement.getx:
+        depsToRemove.add('get');
+        break;
+    }
+
+    // Routing dependencies
+    switch (config.routing) {
+      case Routing.goRouter:
+        depsToRemove.add('go_router');
+        break;
+      case Routing.autoRoute:
+        depsToRemove.add('auto_route');
+        devDepsToRemove.add('auto_route_generator');
+        break;
+      case Routing.navigator:
+        break;
+    }
+
+    for (final name in depsToRemove) {
+      _removeDependency(editor, 'dependencies', name);
+    }
+    for (final name in devDepsToRemove) {
+      _removeDependency(editor, 'dev_dependencies', name);
+    }
+
+    BaseGenerator.writeFile(path, editor.toString());
+  }
+
   /// Adds or updates a dependency in the given [section].
   ///
   /// If [forceUpdate] is true, existing versions are overwritten.
@@ -158,6 +212,16 @@ class PubspecHelper {
       }
     } catch (_) {
       editor.update([section, name], version);
+    }
+  }
+
+  /// Removes a dependency from the given [section].
+  static void _removeDependency(
+      YamlEditor editor, String section, String name) {
+    try {
+      editor.remove([section, name]);
+    } catch (_) {
+      // Dependency doesn't exist, ignore
     }
   }
 
@@ -176,6 +240,24 @@ class PubspecHelper {
 
     for (var entry in dependencies.entries) {
       _addDependency(editor, 'dependencies', entry.key, entry.value);
+    }
+
+    BaseGenerator.writeFile(path, editor.toString());
+  }
+
+  /// Removes custom dependencies from `pubspec.yaml`.
+  static void removeCustomDependencies(List<String> dependencies,
+      {String? baseDir}) {
+    final path =
+        baseDir != null ? p.join(baseDir, 'pubspec.yaml') : 'pubspec.yaml';
+    final file = File(path);
+    if (!file.existsSync()) return;
+
+    final contents = file.readAsStringSync();
+    final editor = YamlEditor(contents);
+
+    for (var name in dependencies) {
+      _removeDependency(editor, 'dependencies', name);
     }
 
     BaseGenerator.writeFile(path, editor.toString());

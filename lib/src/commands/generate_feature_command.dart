@@ -8,7 +8,9 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import '../utils/file_helper.dart';
 import '../utils/feature_helper.dart';
+import '../utils/pubspec_helper.dart';
 import '../utils/validation_utils.dart';
+import '../generators/base_generator.dart';
 
 /// The `generate feature` command.
 class GenerateFeatureCommand extends Command<int> {
@@ -90,12 +92,19 @@ class GenerateFeatureCommand extends Command<int> {
         outputDir: outputDir,
       );
 
-      if (actions.isEmpty) {
+      // Ensure dependencies are present
+      BaseGenerator.beginTracking();
+      await PubspecHelper.addDependencies(config, baseDir: outputDir);
+      final pubspecActions = BaseGenerator.endTracking();
+
+      final allActions = [...actions, ...pubspecActions];
+
+      if (allActions.isEmpty) {
         _logger.info('No changes needed.');
         return ExitCode.success.code;
       }
 
-      FileHelper.renderPlan(actions, _logger, baseDir: outputDir);
+      FileHelper.renderPlan(allActions, _logger, baseDir: outputDir);
 
       if (dryRun) {
         _logger.info('✅ Dry run complete. No files were modified.');
