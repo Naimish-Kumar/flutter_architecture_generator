@@ -63,7 +63,8 @@ abstract class BaseGenerator {
         baseDir: baseDir);
 
     if (config.tests) {
-      TestGenerator.generate(featureName, config, packageName);
+      TestGenerator.generate(featureName, config, packageName,
+          baseDir: baseDir);
     }
 
     return endTracking();

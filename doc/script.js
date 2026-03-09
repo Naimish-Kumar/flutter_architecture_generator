@@ -85,10 +85,10 @@ const commands = [
     },
     {
         name: 'api',
-        desc: 'Generates a Model, Repository, and Service directly from a live API endpoint URL.',
-        usage: 'flutter_arch_gen api <name> --url <endpoint> --feature <target>',
-        example: 'flutter_arch_gen api Product --url https://api.example.com/v1/products/1 --feature shop',
-        details: 'Fetches a sample JSON from the URL, performs type inference to build a Freezed/JsonSerializable model, and scaffolds the corresponding Service and Repository layers. Supports secured APIs via automated token prompts.'
+        desc: 'Generates a complete architectural layer (Model, Repository, Service, Entity) from a live API endpoint or local JSON file.',
+        usage: 'flutter_arch_gen api <name> --url <endpoint_or_file> --feature <target> [--force]',
+        example: 'flutter_arch_gen api Product --url https://fakestoreapi.com/products/1 --feature shop --force',
+        details: 'Overhauled API engine that performs type inference to build Freezed models and Clean Architecture entities. Automatically generates repository interfaces, implementations, and services. Supports local JSON files via <code>file:///</code> URLs and secured APIs via token prompts. Ensures models correctly extend entities for cross-layer type safety.'
     },
     {
         name: 'delete',

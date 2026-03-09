@@ -135,11 +135,30 @@ class PubspecHelper {
     }
 
     // Assets
-    final assets = [
+    final targetAssets = [
       'assets/images/',
       'assets/translations/',
+      '.env.dev',
+      '.env.prod',
     ];
-    editor.update(['flutter', 'assets'], assets);
+
+    try {
+      final existingAssetsNode = editor.parseAt(['flutter', 'assets']);
+      if (existingAssetsNode.value is List) {
+        final existingAssets =
+            List<String>.from(existingAssetsNode.value as List);
+        for (final asset in targetAssets) {
+          if (!existingAssets.contains(asset)) {
+            existingAssets.add(asset);
+          }
+        }
+        editor.update(['flutter', 'assets'], existingAssets);
+      } else {
+        editor.update(['flutter', 'assets'], targetAssets);
+      }
+    } catch (_) {
+      editor.update(['flutter', 'assets'], targetAssets);
+    }
 
     BaseGenerator.writeFile(path, editor.toString());
   }

@@ -3,6 +3,7 @@
 /// Generates architecture-appropriate test files for each feature.
 library;
 
+import 'package:path/path.dart' as p;
 import '../models/generator_config.dart';
 import '../utils/string_utils.dart';
 import 'base_generator.dart';
@@ -10,27 +11,28 @@ import 'base_generator.dart';
 /// Generates test files for features based on the architecture.
 class TestGenerator {
   /// Generates test files for the given feature.
-  static void generate(
-      String name, GeneratorConfig config, String packageName) {
+  static void generate(String name, GeneratorConfig config, String packageName,
+      {String? baseDir}) {
     final pascalName = StringUtils.toPascalCase(name);
     final snakeName = StringUtils.toSnakeCase(name);
     final testPath = 'test/features/$snakeName';
+    final fullTestPath = baseDir != null ? p.join(baseDir, testPath) : testPath;
 
     switch (config.architecture) {
       case Architecture.clean:
-        _generateCleanTest(testPath, snakeName, pascalName, packageName);
+        _generateCleanTest(fullTestPath, snakeName, pascalName, packageName);
         break;
       case Architecture.mvvm:
-        _generateMvvmTest(testPath, snakeName, pascalName, packageName);
+        _generateMvvmTest(fullTestPath, snakeName, pascalName, packageName);
         break;
       case Architecture.bloc:
-        _generateBlocTest(testPath, snakeName, pascalName, packageName);
+        _generateBlocTest(fullTestPath, snakeName, pascalName, packageName);
         break;
       case Architecture.getx:
-        _generateGetxTest(testPath, snakeName, pascalName, packageName);
+        _generateGetxTest(fullTestPath, snakeName, pascalName, packageName);
         break;
       case Architecture.provider:
-        _generateProviderTest(testPath, snakeName, pascalName, packageName);
+        _generateProviderTest(fullTestPath, snakeName, pascalName, packageName);
         break;
     }
   }

@@ -49,15 +49,19 @@ flutter_arch_gen refactor model User --add "String? profileUrl"
 
 ---
 
-## 🌐 API-to-Code Engine
-Generate full feature code directly from a live API endpoint. It fetches a sample response, infers types, and builds your data layer.
+## 🌐 API-to-Code Engine (Overhauled)
+Generate full feature code directly from a live API endpoint or a local JSON file. It fetches a sample response, infers types, and builds your **Domain (Entities, Interfaces)** and **Data (Models, Repositories, Services)** layers.
 
 ```bash
+# From a live URL
 flutter_arch_gen api Product --url https://fakestoreapi.com/products/1 --feature shop
+
+# From a local file
+flutter_arch_gen api Product --url file:///Users/me/data/product.json --feature shop
 ```
 
 ### Why it's smart:
-- **Live Analysis**: It hits the URL to check real data types and nullability for `@JsonSerializable` models.
-*   **Auth Support**: Prompts for a token if the API is secured (401/403 detection).
-- **End-to-End**: Generates the **Model**, **Service**, and **Repository** implementation in one transaction.
-- **Dry Run**: Use `--dry-run` to see the inferred fields before applying.
+- **Architecture Aware**: In Clean Architecture, it generates Entities and ensures Models extend them for perfect type safety.
+- **Type Inference**: Hits the URL (or reads the file) to infer real data types and nullability for `@JsonSerializable` models.
+- **End-to-End**: Generates the **Entity**, **Model**, **Service**, **Repository Interface**, and **Repository Implementation** in one transaction.
+- **Support**: Supports secured APIs via automated token prompts and respects the `--force` flag for CI/CD.

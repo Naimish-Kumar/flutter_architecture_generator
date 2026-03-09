@@ -12,3 +12,7 @@ coverage/
 doc/api/
 pubspec.lock
 analysis_results.txt
+
+# Generator state
+.flutter_arch_gen/
+.flutter_arch_gen_history.json

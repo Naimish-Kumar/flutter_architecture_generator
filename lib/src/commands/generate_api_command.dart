@@ -42,6 +42,12 @@ class GenerateApiCommand extends Command<int> {
       negatable: false,
       help: 'Preview changes without applying them.',
     );
+    argParser.addFlag(
+      'force',
+      abbr: 'r',
+      negatable: false,
+      help: 'Apply changes without confirmation.',
+    );
   }
 
   @override
@@ -87,6 +93,15 @@ class GenerateApiCommand extends Command<int> {
       dynamic apiResponse;
       if (url.startsWith('http')) {
         apiResponse = await _fetchApiResponse(url);
+      } else if (url.startsWith('file://')) {
+        final filePath = url.replaceFirst('file://', '');
+        final file = File(filePath);
+        if (file.existsSync()) {
+          apiResponse = json.decode(file.readAsStringSync());
+        } else {
+          _logger.err('Local file not found: $filePath');
+          return ExitCode.ioError.code;
+        }
       }
 
       BaseGenerator.beginTracking();
@@ -112,11 +127,14 @@ class GenerateApiCommand extends Command<int> {
         return ExitCode.success.code;
       }
 
-      final confirm =
-          _logger.confirm('Apply these changes?', defaultValue: true);
-      if (!confirm) {
-        _logger.info('Cancelled.');
-        return ExitCode.success.code;
+      final force = argResults?['force'] == true;
+      if (!force) {
+        final confirm =
+            _logger.confirm('Apply these changes?', defaultValue: true);
+        if (!confirm) {
+          _logger.info('Cancelled.');
+          return ExitCode.success.code;
+        }
       }
 
       FileHelper.applyPlan(actions, command: 'api $apiName');
@@ -138,20 +156,70 @@ class GenerateApiCommand extends Command<int> {
     dynamic apiResponse,
   ) {
     final featurePath = p.join(baseDir, 'lib', 'features', snakeFeature);
+    final isClean = config.architecture == Architecture.clean;
 
     final fields = _inferFields(apiResponse);
     final constructor = _inferConstructor(apiResponse);
-    final isList = apiResponse is List;
-    final returnType =
-        isList ? 'List<${pascalName}Model>' : '${pascalName}Model';
-    final fromJsonCall = isList
-        ? '(response.data as List).map((e) => ${pascalName}Model.fromJson(e as Map<String, dynamic>)).toList()'
-        : '${pascalName}Model.fromJson(response.data as Map<String, dynamic>)';
+    final entityFields = _inferFields(apiResponse, isEntity: true);
+    final entityConstructor = _inferConstructor(apiResponse, isEntity: true);
 
-    // 1. Model
+    final isList = apiResponse is List;
+    final modelName = '${pascalName}Model';
+    final entityName = '${pascalName}Entity';
+    final baseReturnName = isClean ? entityName : modelName;
+
+    final returnType = isList ? 'List<$baseReturnName>' : baseReturnName;
+    final fromJsonCall = isList
+        ? '(response.data as List).map((e) => $modelName.fromJson(e as Map<String, dynamic>)).toList()'
+        : '$modelName.fromJson(response.data as Map<String, dynamic>)';
+
+    // 1. Entity (Clean Arch only)
+    if (isClean) {
+      final entityContent = TemplateLoader.load(
+        'api_entity',
+        defaultContent: '''
+class $entityName {
+$entityFields
+
+  const $entityName({
+$entityConstructor
+  });
+}
+''',
+        baseDir: baseDir,
+      );
+      BaseGenerator.writeFile(
+          p.join(featurePath, 'domain/entities', '${snakeName}_entity.dart'),
+          entityContent);
+    }
+
+    // 2. Model
     final modelContent = TemplateLoader.load(
       'api_model',
-      defaultContent: '''
+      defaultContent: isClean
+          ? '''
+import 'package:json_annotation/json_annotation.dart';
+import 'package:{{packageName}}/features/{{snakeFeature}}/domain/entities/{{fileName}}_entity.dart';
+
+part '{{fileName}}_model.g.dart';
+
+@JsonSerializable()
+class {{className}}Model extends {{className}}Entity {
+{{fields}}
+
+  const {{className}}Model({
+{{constructor}}
+  }) : super(
+{{superConstructor}}
+  );
+
+  factory {{className}}Model.fromJson(Map<String, dynamic> json) =>
+      _\${{className}}ModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _\${{className}}ModelToJson(this);
+}
+'''
+          : '''
 import 'package:json_annotation/json_annotation.dart';
 
 part '{{fileName}}_model.g.dart';
@@ -175,11 +243,14 @@ class {{className}}Model {
         '{{fileName}}': snakeName,
         '{{fields}}': fields,
         '{{constructor}}': constructor,
+        '{{superConstructor}}': _inferSuperConstructor(apiResponse),
+        '{{packageName}}': packageName,
+        '{{snakeFeature}}': snakeFeature,
       },
       baseDir: baseDir,
     );
 
-    // 2. Data Source / Service
+    // 3. Data Source / Service
     final serviceContent = TemplateLoader.load(
       'api_service',
       defaultContent: '''
@@ -192,9 +263,9 @@ class {{className}}Service {
 
   {{className}}Service(this._client);
 
-  Future<{{returnType}}> get{{className}}() async {
+  Future<{{returnType}}> get{{className}}Data() async {
     try {
-      final response = await _client.get('{{url}}');
+      final response = await _client.dio.get('{{url}}');
       return {{fromJsonCall}};
     } catch (e) {
       rethrow;
@@ -207,16 +278,33 @@ class {{className}}Service {
         '{{fileName}}': snakeName,
         '{{packageName}}': packageName,
         '{{url}}': url,
-        '{{returnType}}': returnType,
+        '{{returnType}}': isList ? 'List<$modelName>' : modelName,
         '{{fromJsonCall}}': fromJsonCall,
       },
       baseDir: baseDir,
     );
 
-    // 3. Repository
+    // 4. Repository
     final repoContent = TemplateLoader.load(
       'api_repository',
-      defaultContent: '''
+      defaultContent: isClean
+          ? '''
+import '../../domain/repositories/{{fileName}}_repository.dart';
+import '../../domain/entities/{{fileName}}_entity.dart';
+import '../datasources/{{fileName}}_remote_datasource.dart'; // Fallback to service if needed
+
+class {{className}}RepositoryImpl implements I{{className}}Repository {
+  final {{className}}Service _service;
+
+  {{className}}RepositoryImpl(this._service);
+
+  @override
+  Future<{{returnType}}> get{{className}}Data() async {
+    return await _service.get{{className}}Data();
+  }
+}
+'''
+          : '''
 import '../services/{{fileName}}_service.dart';
 import '../models/{{fileName}}_model.dart';
 
@@ -225,8 +313,8 @@ class {{className}}Repository {
 
   {{className}}Repository(this._service);
 
-  Future<{{returnType}}> get{{className}}() async {
-    return _service.get{{className}}();
+  Future<{{returnType}}> get{{className}}Data() async {
+    return await _service.get{{className}}Data();
   }
 }
 ''',
@@ -238,20 +326,43 @@ class {{className}}Repository {
       baseDir: baseDir,
     );
 
+    // 5. Repository Interface (Clean Arch only)
+    if (isClean) {
+      final repoInterfaceContent = TemplateLoader.load(
+        'api_repository_interface',
+        defaultContent: '''
+import '../entities/{{fileName}}_entity.dart';
+
+abstract class I{{className}}Repository {
+  Future<{{returnType}}> get{{className}}Data();
+}
+''',
+        replacements: {
+          '{{className}}': pascalName,
+          '{{fileName}}': snakeName,
+          '{{returnType}}': returnType,
+        },
+        baseDir: baseDir,
+      );
+      BaseGenerator.writeFile(
+          p.join(featurePath, 'domain/repositories',
+              '${snakeName}_repository.dart'),
+          repoInterfaceContent);
+    }
+
     final modelDir = p.join(featurePath, config.getModelsDirectory());
     final serviceDir = p.join(featurePath, config.getServicesDirectory());
-    final repoDir = p.join(
-        featurePath,
-        config.architecture == Architecture.clean
-            ? 'data/repositories'
-            : 'repositories');
+    final repoDir =
+        p.join(featurePath, isClean ? 'data/repositories' : 'repositories');
 
     BaseGenerator.writeFile(
         p.join(modelDir, '${snakeName}_model.dart'), modelContent);
     BaseGenerator.writeFile(
         p.join(serviceDir, '${snakeName}_service.dart'), serviceContent);
     BaseGenerator.writeFile(
-        p.join(repoDir, '${snakeName}_repository.dart'), repoContent);
+        p.join(
+            repoDir, '${snakeName}_repository${isClean ? "_impl" : ""}.dart'),
+        repoContent);
   }
 
   Future<dynamic> _fetchApiResponse(String url) async {
@@ -288,10 +399,10 @@ class {{className}}Repository {
     }
   }
 
-  String _inferFields(dynamic json) {
+  String _inferFields(dynamic json, {bool isEntity = false}) {
     if (json is List) {
       if (json.isEmpty) return '  final List<dynamic>? items;';
-      return _inferFields(json.first);
+      return _inferFields(json.first, isEntity: isEntity);
     }
     if (json is! Map) return '  final dynamic value;';
 
@@ -299,7 +410,16 @@ class {{className}}Repository {
     json.forEach((key, value) {
       final type = _getDartType(value);
       final fieldName = StringUtils.toCamelCase(key.toString());
-      buffer.writeln('  final $type? $fieldName;');
+      if (isEntity) {
+        buffer.writeln('  final $type? $fieldName;');
+      } else {
+        // Model fields are inherited from Entity in Clean Arch
+        // unless we want to redeclare them?
+        // Actually, if it extends Entity, we don't need to redeclare them
+        // BUT if it's not Clean Arch, we DO need them.
+        // My template logic handles this by using 'fields' placeholder.
+        buffer.writeln('  final $type? $fieldName;');
+      }
     });
     return buffer.toString();
   }
@@ -319,17 +439,36 @@ class {{className}}Repository {
     return 'dynamic';
   }
 
-  String _inferConstructor(dynamic json) {
+  String _inferConstructor(dynamic json, {bool isEntity = false}) {
     if (json is List) {
       if (json.isEmpty) return '    this.items,';
-      return _inferConstructor(json.first);
+      return _inferConstructor(json.first, isEntity: isEntity);
     }
     if (json is! Map) return '    this.value,';
 
     final buffer = StringBuffer();
     for (final key in json.keys) {
       final fieldName = StringUtils.toCamelCase(key.toString());
-      buffer.writeln('    this.$fieldName,');
+      if (isEntity) {
+        buffer.writeln('    required this.$fieldName,');
+      } else {
+        buffer.writeln('    this.$fieldName,');
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _inferSuperConstructor(dynamic json) {
+    if (json is List) {
+      if (json.isEmpty) return '    items: items,';
+      return _inferSuperConstructor(json.first);
+    }
+    if (json is! Map) return '    value: value,';
+
+    final buffer = StringBuffer();
+    for (final key in json.keys) {
+      final fieldName = StringUtils.toCamelCase(key.toString());
+      buffer.writeln('    $fieldName: $fieldName,');
     }
     return buffer.toString();
   }

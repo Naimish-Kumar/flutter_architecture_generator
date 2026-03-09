@@ -172,10 +172,11 @@ class GenerateArchCommand extends Command<int> {
         return ExitCode.success.code;
       }
 
-      final confirm = _logger.confirm(
-        'Initialize project with these changes?',
-        defaultValue: true,
-      );
+      final confirm = force ||
+          _logger.confirm(
+            'Initialize project with these changes?',
+            defaultValue: true,
+          );
 
       if (!confirm) {
         _logger.info('Cancelled.');

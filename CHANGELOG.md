@@ -1,3 +1,20 @@
+## 1.2.3
+
+### 🚀 New Features
+- **Sealed Freezed Models**: Added support for `sealed class` generation in `model` and `chat` commands for enhanced pattern matching and type safety.
+- **Overhauled API Engine**: Completely re-engineered the `api` command with:
+  - **Clean Architecture Support**: Automatic generation of Domain Entities and Repository Interfaces.
+  - **Model Inheritance**: Models now correctly extend Entities for better separation of concerns.
+  - **Local JSON Support**: Support for `file:///` URLs to generate code from local specifications.
+  - **Standardized Naming**: Unified method naming convention (`get{{ClassName}}Data`).
+- **CLI Improvements**: Added `--force` flag to `api` command and improved consistency across all transactional operations.
+
+### 🐞 Bug Fixes
+- **DotEnv Asset Registration**: Fixed `FileNotFoundError` by automatically registering `.env.dev` and `.env.prod` as assets in `pubspec.yaml`.
+- **API Type Safety**: Resolved return type mismatches in repository implementations and improved field inference for complex JSON responses.
+- **Path Handling**: Fixed path leakage for test files in monorepo structures by correctly resolving `baseDir`.
+- **Template Fixes**: Resolved broken interpolation in Riverpod state management templates.
+
 ## 1.2.2
 
 ### 🏗️ Architectural Core & Stability

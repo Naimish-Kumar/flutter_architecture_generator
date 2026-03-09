@@ -14,7 +14,7 @@ enum MessageType { text, image, video, audio, document }
 enum MessageStatus { sending, sent, delivered, read }
 
 @freezed
-class ChatMessage with _\$ChatMessage {
+sealed class ChatMessage with _\$ChatMessage {
   const factory ChatMessage({
     required String id,
     required String senderId,
@@ -35,7 +35,7 @@ class ChatMessage with _\$ChatMessage {
 }
 
 @freezed
-class ChatRoom with _\$ChatRoom {
+sealed class ChatRoom with _\$ChatRoom {
   const factory ChatRoom({
     required String id,
     required String name,
@@ -588,7 +588,6 @@ class _ChatPageState extends State<ChatPage> {
         return Image.network(message.mediaUrl!, fit: BoxFit.cover);
       case MessageType.video:
         return Container(
-          aspectRatio: 16 / 9,
           color: Colors.black.withOpacity(0.1),
           child: const Center(child: Icon(Icons.play_circle_fill, size: 50, color: Colors.white)),
         );

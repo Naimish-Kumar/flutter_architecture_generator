@@ -19,6 +19,8 @@ class GenerateModelCommand extends Command<int> {
         abbr: 'c', help: 'Configuration profile name');
     argParser.addFlag('dry-run',
         abbr: 'n', negatable: false, help: 'Preview changes');
+    argParser.addFlag('force',
+        abbr: 'r', negatable: false, help: 'Skip confirmation prompts');
   }
 
   final Logger _logger;
@@ -66,7 +68,7 @@ part '{{fileName}}.freezed.dart';
 part '{{fileName}}.g.dart';
 
 @freezed
-class {{className}} with _\${{className}} {
+sealed class {{className}} with _\${{className}} {
   const factory {{className}}({
     required int id,
   }) = _{{className}};
@@ -97,8 +99,10 @@ class {{className}} with _\${{className}} {
       return ExitCode.success.code;
     }
 
+    final force = argResults?['force'] == true;
     if (actions.isNotEmpty) {
-      final confirm = _logger.confirm('Generate model?', defaultValue: true);
+      final confirm =
+          force || _logger.confirm('Generate model?', defaultValue: true);
       if (confirm) {
         FileHelper.applyPlan(actions, command: 'model $modelName');
         _logger.success('Model $className generated successfully! 🎉');
