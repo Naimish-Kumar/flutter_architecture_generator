@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./doc/banner.png" alt="Flutter Architecture Generator Banner" />
+  <img src="./docs/banner.png" alt="Flutter Architecture Generator Banner" />
 </p>
 
 # 🏗️ Flutter Architecture Generator
