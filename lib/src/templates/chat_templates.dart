@@ -163,6 +163,8 @@ class ChatService {
     final isBloc = config.stateManagement == StateManagement.bloc ||
         config.stateManagement == StateManagement.cubit;
     final isProvider = config.stateManagement == StateManagement.provider;
+    final isRiverpod = config.stateManagement == StateManagement.riverpod;
+    final isGetX = config.stateManagement == StateManagement.getx;
 
     final modelsDir = config.getModelsDirectory();
     final stateDir = config.getStateManagementDirectory();
@@ -172,33 +174,39 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 ${isBloc ? "import 'package:flutter_bloc/flutter_bloc.dart';\nimport 'package:$packageName/features/chat/$stateDir/chat_bloc.dart';" : ""}
 ${isProvider ? "import 'package:provider/provider.dart';\nimport 'package:$packageName/features/chat/$stateDir/chat_provider.dart';" : ""}
+${isRiverpod ? "import 'package:flutter_riverpod/flutter_riverpod.dart';\nimport 'package:$packageName/features/chat/$stateDir/chat_provider.dart';" : ""}
+${isGetX ? "import 'package:get/get.dart';\nimport 'package:$packageName/features/chat/$stateDir/chat_controller.dart';" : ""}
 import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';
 import 'package:$packageName/core/theme/app_theme.dart';
 
-class ChatPage extends StatefulWidget {
+class ChatPage extends ${isRiverpod ? 'ConsumerStatefulWidget' : 'StatefulWidget'} {
   final ChatRoom room;
   const ChatPage({super.key, required this.room});
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  ${isRiverpod ? 'ConsumerState' : 'State'}<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends ${isRiverpod ? 'ConsumerState' : 'State'}<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   ChatMessage? _replyMessage;
 
-  ChatThemeExtension get chatTheme => Theme.of(context).extension<ChatThemeExtension>()!;
+  ChatThemeExtension? get chatTheme => Theme.of(context).extension<ChatThemeExtension>();
 
   @override
   void initState() {
     super.initState();
     ${isBloc ? "context.read<ChatBloc>().add(LoadMessagesEvent(roomId: widget.room.id));" : ""}
     ${isProvider ? "context.read<ChatProvider>().loadMessages(widget.room.id);" : ""}
+    ${isRiverpod ? "Future.microtask(() => ref.read(chatProvider(widget.room.id).notifier).loadMessages());" : ""}
+    ${isGetX ? "Get.put(ChatController(chatService: Get.find(), socketService: Get.find(), roomId: widget.room.id));" : ""}
     _scrollController.addListener(() {
       if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent) {
         ${isBloc ? "context.read<ChatBloc>().add(LoadMessagesEvent(roomId: widget.room.id));" : ""}
         ${isProvider ? "context.read<ChatProvider>().loadMessages(widget.room.id);" : ""}
+        ${isRiverpod ? "ref.read(chatProvider(widget.room.id).notifier).loadMessages();" : ""}
+        ${isGetX ? "Get.find<ChatController>().loadMessages();" : ""}
       }
     });
 
@@ -206,6 +214,8 @@ class _ChatPageState extends State<ChatPage> {
        final isTyping = _controller.text.isNotEmpty;
        ${isBloc ? "context.read<ChatBloc>().add(TypingEvent(roomId: widget.room.id, isTyping: isTyping));" : ""}
        ${isProvider ? "context.read<ChatProvider>().sendTyping(widget.room.id, isTyping);" : ""}
+       ${isRiverpod ? "// ref.read(chatProvider(widget.room.id).notifier).sendTyping(isTyping);" : ""}
+       ${isGetX ? "Get.find<ChatController>().sendTyping(isTyping);" : ""}
     });
   }
 
@@ -251,7 +261,7 @@ class _ChatPageState extends State<ChatPage> {
       body: Column(
         children: [
           Expanded(
-            child: ${isBloc ? '_blocMessageList()' : (isProvider ? '_providerMessageList()' : '_fallbackMessageList()')},
+            child: ${isBloc ? '_blocMessageList()' : (isProvider ? '_providerMessageList()' : (isRiverpod ? '_riverpodMessageList()' : (isGetX ? '_getXMessageList()' : '_fallbackMessageList()')))},
           ),
           if (_replyMessage != null) _buildReplyPreview(),
           _buildInputArea(theme),
@@ -270,7 +280,7 @@ class _ChatPageState extends State<ChatPage> {
           isTyping ? 'Typing...' : 'Online',
           style: TextStyle(
             fontSize: 12, 
-            color: isTyping ? chatTheme.typingIndicator : Colors.green,
+            color: isTyping ? (chatTheme?.typingIndicator ?? Colors.orange) : Colors.green,
             fontWeight: isTyping ? FontWeight.bold : FontWeight.normal,
           ),
         );
@@ -283,7 +293,7 @@ class _ChatPageState extends State<ChatPage> {
           provider.otherIsTyping ? 'Typing...' : 'Online',
           style: TextStyle(
             fontSize: 12, 
-            color: provider.otherIsTyping ? chatTheme.typingIndicator : Colors.green,
+            color: provider.otherIsTyping ? (chatTheme?.typingIndicator ?? Colors.orange) : Colors.green,
             fontWeight: provider.otherIsTyping ? FontWeight.bold : FontWeight.normal,
           ),
         );
@@ -359,6 +369,25 @@ class _ChatPageState extends State<ChatPage> {
   }
   ''' : ""}
 
+  ${isRiverpod ? '''
+  Widget _riverpodMessageList() {
+    final messages = ref.watch(chatProvider(widget.room.id));
+    return _buildListView(messages);
+  }
+  ''' : ""}
+
+  ${isGetX ? '''
+  Widget _getXMessageList() {
+    final controller = Get.find<ChatController>();
+    return Obx(() {
+      if (controller.isLoading.value && controller.messages.isEmpty) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return _buildListView(controller.messages.toList());
+    });
+  }
+  ''' : ""}
+
   Widget _fallbackMessageList() {
     final messages = List.generate(20, (index) => ChatMessage(
       id: '\$index',
@@ -409,7 +438,7 @@ class _ChatPageState extends State<ChatPage> {
              width: 20,
              child: LinearProgressIndicator(
                backgroundColor: Colors.transparent,
-               valueColor: AlwaysStoppedAnimation<Color>(chatTheme.typingIndicator!.withOpacity(0.5)),
+               valueColor: AlwaysStoppedAnimation<Color>((chatTheme?.typingIndicator ?? Colors.orange).withOpacity(0.5)),
              ),
            ),
          ],
@@ -439,9 +468,9 @@ class _ChatPageState extends State<ChatPage> {
       padding: const EdgeInsets.all(8),
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: chatTheme.textMe?.withOpacity(0.1) ?? Colors.black.withOpacity(0.05),
+        color: chatTheme?.textMe?.withOpacity(0.1) ?? Colors.black.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8),
-        border: Border(left: BorderSide(color: chatTheme.bubbleMe ?? Colors.blue, width: 3)),
+        border: Border(left: BorderSide(color: chatTheme?.bubbleMe ?? Colors.blue, width: 3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +480,7 @@ class _ChatPageState extends State<ChatPage> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: chatTheme.bubbleMe,
+              color: chatTheme?.bubbleMe ?? Colors.blue,
             ),
           ),
           const SizedBox(height: 2),
@@ -459,7 +488,7 @@ class _ChatPageState extends State<ChatPage> {
             message.parentMessageContent ?? '',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 12, color: chatTheme.textOther?.withOpacity(0.7) ?? Colors.black54),
+            style: TextStyle(fontSize: 12, color: chatTheme?.textOther?.withOpacity(0.7) ?? Colors.black54),
           ),
         ],
       ),
@@ -503,7 +532,7 @@ class _ChatPageState extends State<ChatPage> {
             padding: const EdgeInsets.all(12),
             constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
             decoration: BoxDecoration(
-              color: isMe ? chatTheme.bubbleMe : chatTheme.bubbleOther,
+              color: isMe ? (chatTheme?.bubbleMe ?? theme.primaryColor) : (chatTheme?.bubbleOther ?? Colors.white),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(20),
                 topRight: const Radius.circular(20),
@@ -531,7 +560,7 @@ class _ChatPageState extends State<ChatPage> {
                 Text(
                   message.content,
                   style: TextStyle(
-                    color: isMe ? chatTheme.textMe : chatTheme.textOther,
+                    color: isMe ? (chatTheme?.textMe ?? Colors.white) : (chatTheme?.textOther ?? Colors.black),
                     fontSize: 15,
                     height: 1.4,
                   ),
@@ -570,7 +599,7 @@ class _ChatPageState extends State<ChatPage> {
       case MessageStatus.delivered:
         return const Icon(Icons.done_all, size: size, color: Colors.grey);
       case MessageStatus.read:
-        return Icon(Icons.done_all, size: size, color: chatTheme.statusRead);
+        return Icon(Icons.done_all, size: size, color: chatTheme?.statusRead ?? Colors.blue);
     }
   }
 
@@ -656,6 +685,8 @@ class _ChatPageState extends State<ChatPage> {
                 if (_controller.text.isNotEmpty) {
                   ${isBloc ? "context.read<ChatBloc>().add(SendMessageEvent(roomId: widget.room.id, content: _controller.text, type: MessageType.text, parentMessageId: _replyMessage?.id, parentMessageContent: _replyMessage?.content));" : ""}
                   ${isProvider ? "context.read<ChatProvider>().sendMessage(widget.room.id, _controller.text, MessageType.text, parentMessageId: _replyMessage?.id, parentMessageContent: _replyMessage?.content);" : ""}
+                  ${isRiverpod ? "ref.read(chatProvider(widget.room.id).notifier).sendMessage(_controller.text, MessageType.text);" : ""}
+                  ${isGetX ? "Get.find<ChatController>().sendMessage(_controller.text, MessageType.text);" : ""}
                   _controller.clear();
                   setState(() => _replyMessage = null);
                 }
@@ -1201,6 +1232,148 @@ class ChatProvider extends ChangeNotifier {
   void receiveMessage(ChatMessage message) {
     _messages.insert(0, message);
     notifyListeners();
+  }
+}
+''';
+  }
+
+  /// Returns the content for the chat Riverpod provider.
+  static String chatRiverpodProviderContent(String packageName,
+      {String modelsDir = 'models', String servicesDir = 'services'}) {
+    return '''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';
+import 'package:$packageName/features/chat/$servicesDir/chat_service.dart';
+import 'package:$packageName/features/chat/$servicesDir/socket_service.dart';
+
+final chatProvider = StateNotifierProvider.family<ChatNotifier, List<ChatMessage>, String>((ref, roomId) {
+  final chatService = ref.watch(chatServiceProvider);
+  final socketService = ref.watch(socketServiceProvider);
+  return ChatNotifier(chatService, socketService, roomId);
+});
+
+final chatServiceProvider = Provider((ref) => ChatService(ref.watch(apiClientProvider)));
+final socketServiceProvider = Provider((ref) => SocketService());
+
+class ChatNotifier extends StateNotifier<List<ChatMessage>> {
+  final ChatService _chatService;
+  final SocketService _socketService;
+  final String _roomId;
+
+  ChatNotifier(this._chatService, this._socketService, this._roomId) : super([]) {
+    _socketService.messages.listen((data) {
+      if (data['roomId'] == _roomId) {
+        state = [ChatMessage.fromJson(data), ...state];
+      }
+    });
+  }
+
+  Future<void> loadMessages() async {
+    try {
+      final messages = await _chatService.getMessages(_roomId);
+      state = [...state, ...messages];
+    } catch (e) {
+      // Handle error
+    }
+  }
+
+  void sendMessage(String content, MessageType type) {
+    _socketService.emit('message', {
+      'roomId': _roomId,
+      'content': content,
+      'type': type.name,
+    });
+    
+    final myMessage = ChatMessage(
+      id: DateTime.now().toIso8601String(),
+      senderId: 'me',
+      receiverId: 'other',
+      roomId: _roomId,
+      content: content,
+      type: type,
+      status: MessageStatus.sending,
+      timestamp: DateTime.now(),
+    );
+    state = [myMessage, ...state];
+  }
+}
+''';
+  }
+
+  /// Returns the content for the chat GetX controller.
+  static String chatGetXControllerContent(String packageName,
+      {String modelsDir = 'models', String servicesDir = 'services'}) {
+    return '''
+import 'package:get/get.dart';
+import 'package:$packageName/features/chat/$modelsDir/chat_message.dart';
+import 'package:$packageName/features/chat/$servicesDir/chat_service.dart';
+import 'package:$packageName/features/chat/$servicesDir/socket_service.dart';
+
+class ChatController extends GetxController {
+  final ChatService chatService;
+  final SocketService socketService;
+  final String roomId;
+
+  ChatController({
+    required this.chatService,
+    required this.socketService,
+    required this.roomId,
+  });
+
+  var messages = <ChatMessage>[].obs;
+  var isLoading = false.obs;
+  var isTyping = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadMessages();
+    socketService.messages.listen((data) {
+      if (data['roomId'] == roomId) {
+        messages.insert(0, ChatMessage.fromJson(data));
+      }
+    });
+    socketService.typingEvents.listen((data) {
+      if (data['roomId'] == roomId) {
+        isTyping.value = data['isTyping'];
+      }
+    });
+  }
+
+  Future<void> loadMessages() async {
+    isLoading.value = true;
+    try {
+      final newMessages = await chatService.getMessages(roomId);
+      messages.addAll(newMessages);
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void sendMessage(String content, MessageType type) {
+    socketService.emit('message', {
+      'roomId': roomId,
+      'content': content,
+      'type': type.name,
+    });
+    
+    final myMessage = ChatMessage(
+      id: DateTime.now().toIso8601String(),
+      senderId: 'me',
+      receiverId: 'other',
+      roomId: roomId,
+      content: content,
+      type: type,
+      status: MessageStatus.sending,
+      timestamp: DateTime.now(),
+    );
+    messages.insert(0, myMessage);
+  }
+
+  void sendTyping(bool typing) {
+    socketService.sendTyping(roomId, typing);
   }
 }
 ''';

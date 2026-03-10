@@ -29,7 +29,7 @@ import 'src/commands/generate_theme_command.dart';
 import 'src/commands/refactor_command.dart';
 
 /// The current version of the Flutter Architecture Generator.
-const String packageVersion = '1.2.3';
+const String packageVersion = '1.2.2';
 
 /// The command runner for the Flutter Architecture Generator CLI.
 ///

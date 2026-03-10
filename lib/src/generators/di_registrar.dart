@@ -44,6 +44,8 @@ class DIRegistrar {
           "import 'package:$packageName/features/chat/$stateDir/chat_bloc.dart';",
         if (config.stateManagement == StateManagement.provider)
           "import 'package:$packageName/features/chat/$stateDir/chat_provider.dart';",
+        if (config.stateManagement == StateManagement.getx)
+          "import 'package:$packageName/features/chat/$stateDir/chat_controller.dart';",
       ]);
 
       registration = '''
@@ -66,6 +68,9 @@ class DIRegistrar {
       } else if (config.stateManagement == StateManagement.provider) {
         registration +=
             '  sl.registerFactory(() => ChatProvider(chatService: sl(), socketService: sl()));\n';
+      } else if (config.stateManagement == StateManagement.getx) {
+        registration +=
+            '  sl.registerFactory(() => ChatController(chatService: sl(), socketService: sl(), roomId: ""));\n';
       }
     } else {
       // Standard feature registration logic
@@ -172,6 +177,66 @@ class DIRegistrar {
     }
 
     if (!contents.contains('// $pascalName Feature')) {
+      contents =
+          contents.replaceFirst('// Features', '// Features\n$registration');
+    }
+
+    BaseGenerator.writeFile(diPath, contents);
+  }
+
+  /// Registers an API integration's dependencies in `injection_container.dart`.
+  static void registerApi(
+    String apiName,
+    String featureName,
+    GeneratorConfig config,
+    String packageName, {
+    String? baseDir,
+  }) {
+    final root = baseDir ?? Directory.current.path;
+    final diPath = p.join(root, 'lib', 'di', 'injection_container.dart');
+    final diFile = File(diPath);
+    if (!diFile.existsSync()) return;
+
+    final pascalName = StringUtils.toPascalCase(apiName);
+    final snakeName = StringUtils.toSnakeCase(apiName);
+    final snakeFeature = StringUtils.toSnakeCase(featureName);
+
+    String contents = diFile.readAsStringSync();
+
+    final imports = <String>[
+      "import 'package:$packageName/features/$snakeFeature/services/${snakeName}_service.dart';",
+      if (config.architecture == Architecture.clean) ...[
+        "import 'package:$packageName/features/$snakeFeature/domain/repositories/${snakeName}_repository.dart';",
+        "import 'package:$packageName/features/$snakeFeature/data/repositories/${snakeName}_repository_impl.dart';",
+        "import 'package:$packageName/features/$snakeFeature/domain/usecases/get_${snakeName}_usecase.dart';",
+      ] else ...[
+        "import 'package:$packageName/features/$snakeFeature/repositories/${snakeName}_repository.dart';",
+      ],
+    ];
+
+    String registration = '\n  // $pascalName API Integration\n';
+    registration +=
+        '  sl.registerLazySingleton(() => ${pascalName}Service(sl()));\n';
+
+    if (config.architecture == Architecture.clean) {
+      registration +=
+          '  sl.registerLazySingleton<I${pascalName}Repository>(() => ${pascalName}RepositoryImpl(sl()));\n';
+      registration +=
+          '  sl.registerLazySingleton(() => Get${pascalName}UseCase(sl()));\n';
+    } else {
+      registration +=
+          '  sl.registerLazySingleton(() => ${pascalName}Repository(sl()));\n';
+    }
+
+    // Add imports
+    for (var imp in imports) {
+      if (!contents.contains(imp)) {
+        contents = '$imp\n$contents';
+      }
+    }
+
+    // Add registration
+    if (!contents.contains('// $pascalName API Integration')) {
       contents =
           contents.replaceFirst('// Features', '// Features\n$registration');
     }

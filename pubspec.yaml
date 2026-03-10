@@ -2,7 +2,7 @@ name: flutter_architecture_generator
 description: >-
   A CLI tool to scaffold professional Flutter projects with Clean, MVVM, 
   BLoC, GetX, or Provider architecture plus DI, routing, and tests.
-version: 1.2.3
+version: 1.2.2
 homepage: https://github.com/Naimish-Kumar/flutter_architecture_generator
 repository: https://github.com/Naimish-Kumar/flutter_architecture_generator
 issue_tracker: https://github.com/Naimish-Kumar/flutter_architecture_generator/issues

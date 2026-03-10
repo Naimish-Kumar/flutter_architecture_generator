@@ -49,19 +49,24 @@ flutter_arch_gen refactor model User --add "String? profileUrl"
 
 ---
 
-## 🌐 API-to-Code Engine (Overhauled)
-Generate full feature code directly from a live API endpoint or a local JSON file. It fetches a sample response, infers types, and builds your **Domain (Entities, Interfaces)** and **Data (Models, Repositories, Services)** layers.
+## 🌐 API-to-Code Engine (Pro)
+Generate full feature code directly from a live API endpoint or a local JSON file. It fetches a sample response, infers types, and builds your **Domain (Entities, UseCases)** and **Data (Models, Repositories, Services)** layers.
 
 ```bash
-# From a live URL
-flutter_arch_gen api Product --url https://fakestoreapi.com/products/1 --feature shop
+# Basic GET request
+flutter_arch_gen api Product -u https://api.com/products/1 -f shop
 
-# From a local file
-flutter_arch_gen api Product --url file:///Users/me/data/product.json --feature shop
+# POST request with custom body for type inference
+flutter_arch_gen api CreateUser -u https://api.com/users -m POST -b '{"name":"Naimish"}' -f auth
 ```
 
-### Why it's smart:
-- **Architecture Aware**: In Clean Architecture, it generates Entities and ensures Models extend them for perfect type safety.
-- **Type Inference**: Hits the URL (or reads the file) to infer real data types and nullability for `@JsonSerializable` models.
-- **End-to-End**: Generates the **Entity**, **Model**, **Service**, **Repository Interface**, and **Repository Implementation** in one transaction.
-- **Support**: Supports secured APIs via automated token prompts and respects the `--force` flag for CI/CD.
+### 🧠 Advanced Capabilities:
+- 🔄 **Recursive Nested Models**: Automatically detects nested objects or lists in your JSON and generates separate model/entity files for them. No manual refactoring required!
+- ⚡ **Full CRUD Support**: Supports `GET`, `POST`, `PUT`, `DELETE`, and `PATCH` with the `-m` flag.
+- 📬 **Request Body & Queries**: Use the `-b` flag to pass a JSON body. Generated code automatically supports both `data` and `queryParameters` via named parameters.
+- 💉 **Auto-DI Registration**: Generated Services, Repositories, and UseCases are automatically registered in your `injection_container.dart` (GetIt).
+- 🧪 **Unit Test Scaffolding**: Automatically generates specialized unit tests for your Services and Repositories in the `test/` folder.
+- 🏗️ **Architecture Aware**: 
+  - **Clean**: Generates Entities, Models (extending entities), Repositories, and UseCases.
+  - **MVVM/Standard**: Generates Models, Repositories, and Services tailored to your config.
+- 🔒 **Secured API Support**: Interactive prompts for Authorization tokens and headers if the endpoint requires them.

@@ -85,10 +85,10 @@ const commands = [
     },
     {
         name: 'api',
-        desc: 'Generates a complete architectural layer (Model, Repository, Service, Entity) from a live API endpoint or local JSON file.',
-        usage: 'flutter_arch_gen api <name> --url <endpoint_or_file> --feature <target> [--force]',
-        example: 'flutter_arch_gen api Product --url https://fakestoreapi.com/products/1 --feature shop --force',
-        details: 'Overhauled API engine that performs type inference to build Freezed models and Clean Architecture entities. Automatically generates repository interfaces, implementations, and services. Supports local JSON files via <code>file:///</code> URLs and secured APIs via token prompts. Ensures models correctly extend entities for cross-layer type safety.'
+        desc: 'Generates a complete architectural layer (Model, Repository, Service, UseCase) from a live API endpoint or local JSON file.',
+        usage: 'flutter_arch_gen api <name> --url <endpoint_or_file> --feature <target> [-m <method>] [-b <body>]',
+        example: 'flutter_arch_gen api User -u https://api.com/user -m POST -b \'{"id":1}\' -f auth',
+        details: 'The ultimate API scaffolding engine. Features <b>Recursive Nested Model generation</b>, support for <b>GET, POST, PUT, DELETE, PATCH</b> via the <code>-m</code> flag, and request body analysis via <code>-b</code>. It automatically registers components in <b>GetIt (DI)</b> and scaffolds <b>Unit Tests</b> for services and repositories. In Clean Architecture, it ensures Models correctly extend Entities for strict type safety.'
     },
     {
         name: 'delete',

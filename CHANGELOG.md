@@ -1,34 +1,25 @@
-## 1.2.3
-
-### 🚀 New Features
-- **Sealed Freezed Models**: Added support for `sealed class` generation in `model` and `chat` commands for enhanced pattern matching and type safety.
-- **Overhauled API Engine**: Completely re-engineered the `api` command with:
-  - **Clean Architecture Support**: Automatic generation of Domain Entities and Repository Interfaces.
-  - **Model Inheritance**: Models now correctly extend Entities for better separation of concerns.
-  - **Local JSON Support**: Support for `file:///` URLs to generate code from local specifications.
-  - **Standardized Naming**: Unified method naming convention (`get{{ClassName}}Data`).
-- **CLI Improvements**: Added `--force` flag to `api` command and improved consistency across all transactional operations.
-
-### 🐞 Bug Fixes
-- **DotEnv Asset Registration**: Fixed `FileNotFoundError` by automatically registering `.env.dev` and `.env.prod` as assets in `pubspec.yaml`.
-- **API Type Safety**: Resolved return type mismatches in repository implementations and improved field inference for complex JSON responses.
-- **Path Handling**: Fixed path leakage for test files in monorepo structures by correctly resolving `baseDir`.
-- **Template Fixes**: Resolved broken interpolation in Riverpod state management templates.
-
 ## 1.2.2
 
+### 🚀 High-Performance API Engine (Major Upgrade)
+- **Recursive Nested Models**: Automatically detects and scaffolds separate model/entity files for nested JSON objects and lists.
+- **Full HTTP Method Support**: Generate integrations for `GET`, `POST`, `PUT`, `DELETE`, and `PATCH` using the `-m` flag.
+- **Request Body Support**: New `-b` (body) flag allows passing a sample JSON body for POST/PUT requests to infer structure.
+- **Auto-DI Integration**: Automatically registers generated services, repositories, and use cases in `injection_container.dart` (GetIt).
+- **Unit Test Generation**: Scaffolds specialized unit tests for services and repositories by default.
+- **Clean Architecture aware**: Entities and Models are correctly linked (models extend entities) for perfect cross-layer type safety.
+
 ### 🏗️ Architectural Core & Stability
-- **Unified Routing Templates**: Re-engineered `app.dart`, `main.dart`, and `app_router.dart` for both **AutoRoute** and **GoRouter**. Fixed multiple compilation errors where the router field was missing or incorrectly scoped in the `MyApp` widget.
-- **Smart DI Registration**: Rewrote the `DIRegistrar` to independently register architecture-specific logic (layers and use cases) and state-management logic (controllers/blocs). This enables flawless cross-compatibility between patterns like **Clean Arch + BLoC** and **MVVM + Provider**.
-- **Context-Aware State Management**: Fixed `StateManagementGenerator` to correctly target the `services` directory when using **MVVM** and `repositories` when using **Clean Architecture** for BLoC/Cubit.
-- **Robust Feature Scaffolding**: Completed missing file generation for **BLoC, GetX, and Provider** patterns. Features now generate ready-to-use business logic files with absolute package imports and proper boilerplate.
+- **Unified Routing Templates**: Re-engineered `app.dart`, `main.dart`, and `app_router.dart` for both **AutoRoute** and **GoRouter**.
+- **Smart DI Registration**: Rewrote the `DIRegistrar` to independently register architecture-specific layers and state-management logic.
+- **Enhanced Chat Module**: Added support for **Riverpod** and **GetX** state management in the chat feature.
+- **Theme Safety**: Hardened the generated `ChatThemeExtension` with null-safe fallbacks.
 
 ### 🐞 Bug Fixes
-- **Template Placeholders**: Replaced direct Dart interpolation with explicit `{{archName}}`, `{{className}}`, and `{{fileName}}` placeholders for reliable generation and custom template support.
-- **Undefined Name 'config'**: Fixed a critical bug where the literal string `config` would appear in generated files instead of resolved values.
-- **API Strategy Fix**: The `api` command now correctly respects architecture-specific directories (`data/repositories` vs `repositories`).
-- **Freezed Conventions**: Corrected the `_className` factory implementation naming to match internal Freezed standards.
-- **GoRouter Integration**: Fixed the `AppRouter` class wrapper in GoRouter templates to ensure it can be properly instantiated and injected into the app.
+- **Asset Registration**: Automatically registers `.env.dev` and `.env.prod` as assets in `pubspec.yaml`.
+- **Path Handling**: Fixed path leakage for test files and improved consistency across all transactional operations.
+- **Type Safety**: Resolved return type mismatches and improved field inference for complex JSON responses.
+- **Template Fixes**: Resolved broken interpolation in Riverpod state management templates and Freezed class names.
+
 
 ## 1.2.1
 

@@ -7,8 +7,9 @@ import 'package:path/path.dart' as p;
 import '../models/generator_config.dart';
 import '../utils/file_helper.dart';
 import '../utils/string_utils.dart';
-import '../utils/template_loader.dart';
 import '../generators/base_generator.dart';
+import '../generators/di_registrar.dart';
+import '../templates/api_templates.dart';
 
 /// The `api` command — generates Model, Repository, and Service for an API.
 class GenerateApiCommand extends Command<int> {
@@ -25,6 +26,12 @@ class GenerateApiCommand extends Command<int> {
       abbr: 'f',
       help: 'Target feature for the API files.',
       mandatory: true,
+    );
+    argParser.addOption(
+      'method',
+      abbr: 'm',
+      help: 'HTTP Method (GET, POST, PUT, DELETE, PATCH).',
+      defaultsTo: 'GET',
     );
     argParser.addOption(
       'output',
@@ -48,6 +55,11 @@ class GenerateApiCommand extends Command<int> {
       negatable: false,
       help: 'Apply changes without confirmation.',
     );
+    argParser.addOption(
+      'body',
+      abbr: 'b',
+      help: 'JSON body for POST/PUT requests (as a string).',
+    );
   }
 
   @override
@@ -58,6 +70,7 @@ class GenerateApiCommand extends Command<int> {
       'Generate Model + Repository + Service from an endpoint URL or spec.';
 
   final Logger _logger;
+  final List<_ApiModelTask> _generationQueue = [];
 
   @override
   Future<int> run() async {
@@ -71,6 +84,8 @@ class GenerateApiCommand extends Command<int> {
 
     final url = argResults?['url'] as String;
     final featureName = argResults?['feature'] as String;
+    final method = (argResults?['method'] as String).toUpperCase();
+    final bodyString = argResults?['body'] as String?;
     final outputDir = argResults?['output'] as String?;
     final configName = argResults?['config'] as String?;
     final dryRun = argResults?['dry-run'] == true;
@@ -81,7 +96,7 @@ class GenerateApiCommand extends Command<int> {
       return ExitCode.usage.code;
     }
 
-    final progress = _logger.progress('📡 Analyzing API: $url...');
+    final progress = _logger.progress('📡 Analyzing API: $url ($method)...');
 
     try {
       final baseDir = outputDir ?? Directory.current.path;
@@ -92,30 +107,49 @@ class GenerateApiCommand extends Command<int> {
 
       dynamic apiResponse;
       if (url.startsWith('http')) {
-        apiResponse = await _fetchApiResponse(url);
-      } else if (url.startsWith('file://')) {
-        final filePath = url.replaceFirst('file://', '');
+        apiResponse =
+            await _fetchApiResponse(url, method: method, body: bodyString);
+      } else {
+        final filePath =
+            url.startsWith('file://') ? url.replaceFirst('file://', '') : url;
         final file = File(filePath);
         if (file.existsSync()) {
           apiResponse = json.decode(file.readAsStringSync());
         } else {
-          _logger.err('Local file not found: $filePath');
-          return ExitCode.ioError.code;
+          apiResponse =
+              await _fetchApiResponse(url, method: method, body: bodyString);
         }
       }
 
       BaseGenerator.beginTracking();
 
-      _generateApiFiles(
-        baseDir,
-        pascalName,
-        snakeName,
-        snakeFeature,
-        url,
-        config,
-        packageName,
-        apiResponse,
-      );
+      _generationQueue.clear();
+      _generationQueue.add(_ApiModelTask(
+        pascalName: pascalName,
+        snakeName: snakeName,
+        data: apiResponse,
+        isRoot: true,
+      ));
+
+      while (_generationQueue.isNotEmpty) {
+        final task = _generationQueue.removeAt(0);
+        _generateApiFiles(
+          baseDir,
+          task.pascalName,
+          task.snakeName,
+          snakeFeature,
+          url,
+          config,
+          packageName,
+          task.data,
+          method,
+          isRoot: task.isRoot,
+        );
+      }
+
+      // Register in DI
+      DIRegistrar.registerApi(apiName, featureName, config, packageName,
+          baseDir: baseDir);
 
       final actions = BaseGenerator.endTracking();
       progress.complete('API analysis complete! ✅');
@@ -154,13 +188,15 @@ class GenerateApiCommand extends Command<int> {
     GeneratorConfig config,
     String packageName,
     dynamic apiResponse,
-  ) {
+    String method, {
+    bool isRoot = false,
+  }) {
     final featurePath = p.join(baseDir, 'lib', 'features', snakeFeature);
     final isClean = config.architecture == Architecture.clean;
 
-    final fields = _inferFields(apiResponse);
+    final fields = _inferFields(apiResponse, pascalName);
     final constructor = _inferConstructor(apiResponse);
-    final entityFields = _inferFields(apiResponse, isEntity: true);
+    final entityFields = _inferFields(apiResponse, pascalName, isEntity: true);
     final entityConstructor = _inferConstructor(apiResponse, isEntity: true);
 
     final isList = apiResponse is List;
@@ -175,18 +211,10 @@ class GenerateApiCommand extends Command<int> {
 
     // 1. Entity (Clean Arch only)
     if (isClean) {
-      final entityContent = TemplateLoader.load(
-        'api_entity',
-        defaultContent: '''
-class $entityName {
-$entityFields
-
-  const $entityName({
-$entityConstructor
-  });
-}
-''',
-        baseDir: baseDir,
+      final entityContent = ApiTemplates.entityContent(
+        className: entityName,
+        fields: entityFields,
+        constructor: entityConstructor,
       );
       BaseGenerator.writeFile(
           p.join(featurePath, 'domain/entities', '${snakeName}_entity.dart'),
@@ -194,194 +222,131 @@ $entityConstructor
     }
 
     // 2. Model
-    final modelContent = TemplateLoader.load(
-      'api_model',
-      defaultContent: isClean
-          ? '''
-import 'package:json_annotation/json_annotation.dart';
-import 'package:{{packageName}}/features/{{snakeFeature}}/domain/entities/{{fileName}}_entity.dart';
-
-part '{{fileName}}_model.g.dart';
-
-@JsonSerializable()
-class {{className}}Model extends {{className}}Entity {
-{{fields}}
-
-  const {{className}}Model({
-{{constructor}}
-  }) : super(
-{{superConstructor}}
-  );
-
-  factory {{className}}Model.fromJson(Map<String, dynamic> json) =>
-      _\${{className}}ModelFromJson(json);
-
-  Map<String, dynamic> toJson() => _\${{className}}ModelToJson(this);
-}
-'''
-          : '''
-import 'package:json_annotation/json_annotation.dart';
-
-part '{{fileName}}_model.g.dart';
-
-@JsonSerializable()
-class {{className}}Model {
-{{fields}}
-
-  const {{className}}Model({
-{{constructor}}
-  });
-
-  factory {{className}}Model.fromJson(Map<String, dynamic> json) =>
-      _\${{className}}ModelFromJson(json);
-
-  Map<String, dynamic> toJson() => _\${{className}}ModelToJson(this);
-}
-''',
-      replacements: {
-        '{{className}}': pascalName,
-        '{{fileName}}': snakeName,
-        '{{fields}}': fields,
-        '{{constructor}}': constructor,
-        '{{superConstructor}}': _inferSuperConstructor(apiResponse),
-        '{{packageName}}': packageName,
-        '{{snakeFeature}}': snakeFeature,
-      },
-      baseDir: baseDir,
+    final modelContent = ApiTemplates.modelContent(
+      className: pascalName,
+      fileName: snakeName,
+      packageName: packageName,
+      snakeFeature: snakeFeature,
+      fields: fields,
+      constructor: constructor,
+      superName: isClean ? entityName : null,
+      superConstructor: isClean ? _inferSuperConstructor(apiResponse) : null,
     );
-
-    // 3. Data Source / Service
-    final serviceContent = TemplateLoader.load(
-      'api_service',
-      defaultContent: '''
-import 'package:dio/dio.dart';
-import 'package:{{packageName}}/core/network/api_client.dart';
-import '../models/{{fileName}}_model.dart';
-
-class {{className}}Service {
-  final ApiClient _client;
-
-  {{className}}Service(this._client);
-
-  Future<{{returnType}}> get{{className}}Data() async {
-    try {
-      final response = await _client.dio.get('{{url}}');
-      return {{fromJsonCall}};
-    } catch (e) {
-      rethrow;
-    }
-  }
-}
-''',
-      replacements: {
-        '{{className}}': pascalName,
-        '{{fileName}}': snakeName,
-        '{{packageName}}': packageName,
-        '{{url}}': url,
-        '{{returnType}}': isList ? 'List<$modelName>' : modelName,
-        '{{fromJsonCall}}': fromJsonCall,
-      },
-      baseDir: baseDir,
-    );
-
-    // 4. Repository
-    final repoContent = TemplateLoader.load(
-      'api_repository',
-      defaultContent: isClean
-          ? '''
-import '../../domain/repositories/{{fileName}}_repository.dart';
-import '../../domain/entities/{{fileName}}_entity.dart';
-import '../datasources/{{fileName}}_remote_datasource.dart'; // Fallback to service if needed
-
-class {{className}}RepositoryImpl implements I{{className}}Repository {
-  final {{className}}Service _service;
-
-  {{className}}RepositoryImpl(this._service);
-
-  @override
-  Future<{{returnType}}> get{{className}}Data() async {
-    return await _service.get{{className}}Data();
-  }
-}
-'''
-          : '''
-import '../services/{{fileName}}_service.dart';
-import '../models/{{fileName}}_model.dart';
-
-class {{className}}Repository {
-  final {{className}}Service _service;
-
-  {{className}}Repository(this._service);
-
-  Future<{{returnType}}> get{{className}}Data() async {
-    return await _service.get{{className}}Data();
-  }
-}
-''',
-      replacements: {
-        '{{className}}': pascalName,
-        '{{fileName}}': snakeName,
-        '{{returnType}}': returnType,
-      },
-      baseDir: baseDir,
-    );
-
-    // 5. Repository Interface (Clean Arch only)
-    if (isClean) {
-      final repoInterfaceContent = TemplateLoader.load(
-        'api_repository_interface',
-        defaultContent: '''
-import '../entities/{{fileName}}_entity.dart';
-
-abstract class I{{className}}Repository {
-  Future<{{returnType}}> get{{className}}Data();
-}
-''',
-        replacements: {
-          '{{className}}': pascalName,
-          '{{fileName}}': snakeName,
-          '{{returnType}}': returnType,
-        },
-        baseDir: baseDir,
-      );
-      BaseGenerator.writeFile(
-          p.join(featurePath, 'domain/repositories',
-              '${snakeName}_repository.dart'),
-          repoInterfaceContent);
-    }
 
     final modelDir = p.join(featurePath, config.getModelsDirectory());
-    final serviceDir = p.join(featurePath, config.getServicesDirectory());
-    final repoDir =
-        p.join(featurePath, isClean ? 'data/repositories' : 'repositories');
-
     BaseGenerator.writeFile(
         p.join(modelDir, '${snakeName}_model.dart'), modelContent);
-    BaseGenerator.writeFile(
-        p.join(serviceDir, '${snakeName}_service.dart'), serviceContent);
-    BaseGenerator.writeFile(
-        p.join(
-            repoDir, '${snakeName}_repository${isClean ? "_impl" : ""}.dart'),
-        repoContent);
+
+    // Only generate Service, Repo, UseCase for the root object
+    if (isRoot) {
+      // 3. Service
+      final serviceContent = ApiTemplates.serviceContent(
+        className: pascalName,
+        fileName: snakeName,
+        packageName: packageName,
+        url: url,
+        returnType: isList ? 'List<$modelName>' : modelName,
+        fromJsonCall: fromJsonCall,
+        method: method,
+      );
+      final serviceDir = p.join(featurePath, config.getServicesDirectory());
+      BaseGenerator.writeFile(
+          p.join(serviceDir, '${snakeName}_service.dart'), serviceContent);
+
+      // 4. Repository & Interface
+      if (isClean) {
+        final repoInterface = ApiTemplates.repositoryInterfaceContent(
+          className: pascalName,
+          fileName: snakeName,
+          returnType: returnType,
+          method: method,
+        );
+        BaseGenerator.writeFile(
+            p.join(featurePath, 'domain/repositories',
+                '${snakeName}_repository.dart'),
+            repoInterface);
+      }
+
+      final repoContent = ApiTemplates.repositoryImplContent(
+        className: pascalName,
+        fileName: snakeName,
+        returnType: returnType,
+        isClean: isClean,
+        method: method,
+      );
+      final repoDir =
+          p.join(featurePath, isClean ? 'data/repositories' : 'repositories');
+      BaseGenerator.writeFile(
+          p.join(
+              repoDir, '${snakeName}_repository${isClean ? "_impl" : ""}.dart'),
+          repoContent);
+
+      // 5. Use Case (Clean Arch only)
+      if (isClean) {
+        final useCaseContent = ApiTemplates.useCaseContent(
+          className: pascalName,
+          fileName: snakeName,
+          returnType: returnType,
+          packageName: packageName,
+          snakeFeature: snakeFeature,
+          method: method,
+        );
+        BaseGenerator.writeFile(
+            p.join(featurePath, 'domain/usecases',
+                'get_${snakeName}_usecase.dart'),
+            useCaseContent);
+      }
+
+      // 6. Tests
+      final testPath = p.join(baseDir, 'test', 'features', snakeFeature);
+      final serviceTest = ApiTemplates.serviceTestContent(
+        className: pascalName,
+        fileName: snakeName,
+        packageName: packageName,
+        snakeFeature: snakeFeature,
+      );
+      BaseGenerator.writeFile(
+          p.join(testPath, 'services', '${snakeName}_service_test.dart'),
+          serviceTest);
+
+      final repoTest = ApiTemplates.repositoryTestContent(
+        className: pascalName,
+        fileName: snakeName,
+        packageName: packageName,
+        snakeFeature: snakeFeature,
+        isClean: isClean,
+      );
+      BaseGenerator.writeFile(
+          p.join(testPath, isClean ? 'data/repositories' : 'repositories',
+              '${snakeName}_repository_test.dart'),
+          repoTest);
+    }
   }
 
-  Future<dynamic> _fetchApiResponse(String url) async {
+  Future<dynamic> _fetchApiResponse(String url,
+      {String method = 'GET', String? body}) async {
     final client = HttpClient();
     String? token;
 
     try {
       while (true) {
         final uri = Uri.parse(url);
-        final request = await client.getUrl(uri);
+        final request = await client.openUrl(method, uri);
 
         if (token != null) {
           request.headers.set('Authorization', 'Bearer $token');
         }
 
+        if (body != null && body.isNotEmpty) {
+          request.headers.contentType = ContentType.json;
+          request.write(body);
+        }
+
         final response = await request.close();
 
-        if (response.statusCode == 200) {
+        if (response.statusCode >= 200 && response.statusCode < 300) {
           final content = await response.transform(utf8.decoder).join();
+          if (content.isEmpty) return {};
           return json.decode(content);
         } else if (response.statusCode == 401 || response.statusCode == 403) {
           _logger.info('🔒 API requires authorization.');
@@ -399,32 +364,24 @@ abstract class I{{className}}Repository {
     }
   }
 
-  String _inferFields(dynamic json, {bool isEntity = false}) {
+  String _inferFields(dynamic json, String parentName,
+      {bool isEntity = false}) {
     if (json is List) {
       if (json.isEmpty) return '  final List<dynamic>? items;';
-      return _inferFields(json.first, isEntity: isEntity);
+      return _inferFields(json.first, parentName, isEntity: isEntity);
     }
     if (json is! Map) return '  final dynamic value;';
 
     final buffer = StringBuffer();
     json.forEach((key, value) {
-      final type = _getDartType(value);
       final fieldName = StringUtils.toCamelCase(key.toString());
-      if (isEntity) {
-        buffer.writeln('  final $type? $fieldName;');
-      } else {
-        // Model fields are inherited from Entity in Clean Arch
-        // unless we want to redeclare them?
-        // Actually, if it extends Entity, we don't need to redeclare them
-        // BUT if it's not Clean Arch, we DO need them.
-        // My template logic handles this by using 'fields' placeholder.
-        buffer.writeln('  final $type? $fieldName;');
-      }
+      final type = _getDartType(value, parentName, fieldName);
+      buffer.writeln('  final $type? $fieldName;');
     });
     return buffer.toString();
   }
 
-  String _getDartType(dynamic value) {
+  String _getDartType(dynamic value, String parentName, String fieldName) {
     if (value == null) return 'dynamic';
     if (value is int) return 'int';
     if (value is double) return 'double';
@@ -432,11 +389,29 @@ abstract class I{{className}}Repository {
     if (value is String) return 'String';
     if (value is List) {
       if (value.isEmpty) return 'List<dynamic>';
-      final firstType = _getDartType(value.first);
-      return 'List<$firstType>';
+      final first = value.first;
+      if (first is Map) {
+        final subClassName = StringUtils.toPascalCase(fieldName);
+        _addToQueue(subClassName, first);
+        return 'List<${subClassName}Model>';
+      }
+      return 'List<${_getDartType(first, parentName, fieldName)}>';
     }
-    if (value is Map) return 'Map<String, dynamic>';
+    if (value is Map) {
+      final subClassName = StringUtils.toPascalCase(fieldName);
+      _addToQueue(subClassName, value);
+      return '${subClassName}Model';
+    }
     return 'dynamic';
+  }
+
+  void _addToQueue(String pascalName, dynamic data) {
+    if (_generationQueue.any((t) => t.pascalName == pascalName)) return;
+    _generationQueue.add(_ApiModelTask(
+      pascalName: pascalName,
+      snakeName: StringUtils.toSnakeCase(pascalName),
+      data: data,
+    ));
   }
 
   String _inferConstructor(dynamic json, {bool isEntity = false}) {
@@ -472,4 +447,18 @@ abstract class I{{className}}Repository {
     }
     return buffer.toString();
   }
+}
+
+class _ApiModelTask {
+  final String pascalName;
+  final String snakeName;
+  final dynamic data;
+  final bool isRoot;
+
+  _ApiModelTask({
+    required this.pascalName,
+    required this.snakeName,
+    required this.data,
+    this.isRoot = false,
+  });
 }

@@ -31,7 +31,8 @@ class ChatGenerator {
     // 2. Add Dependencies
     PubspecHelper.addCustomDependencies({
       'socket_io_client': '^3.1.1',
-      'intl': '^0.20.2',
+      'intl': '^0.19.0',
+      'equatable': '^2.0.5',
     }, baseDir: baseDir);
 
     // 2. Create architecture-specific directories
@@ -133,8 +134,19 @@ class ChatGenerator {
         ChatTemplates.chatViewModelProviderContent(packageName,
             modelsDir: modelsDir, servicesDir: servicesDir),
       );
+    } else if (config.stateManagement == StateManagement.riverpod) {
+      BaseGenerator.writeFile(
+        p.join(featurePath, stateDir, 'chat_provider.dart'),
+        ChatTemplates.chatRiverpodProviderContent(packageName,
+            modelsDir: modelsDir, servicesDir: servicesDir),
+      );
+    } else if (config.stateManagement == StateManagement.getx) {
+      BaseGenerator.writeFile(
+        p.join(featurePath, stateDir, 'chat_controller.dart'),
+        ChatTemplates.chatGetXControllerContent(packageName,
+            modelsDir: modelsDir, servicesDir: servicesDir),
+      );
     }
-    // TODO: Add Riverpod / GetX specific chat templates
   }
 
   static void _generateCleanSpecificFiles(
