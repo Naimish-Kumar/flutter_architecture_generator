@@ -1,11 +1,11 @@
-## 1.2.2
+## 1.2.4
 
 ### 🚀 High-Performance API Engine (Major Upgrade)
 - **Recursive Nested Models**: Automatically detects and scaffolds separate model/entity files for nested JSON objects and lists.
 - **Full HTTP Method Support**: Generate integrations for `GET`, `POST`, `PUT`, `DELETE`, and `PATCH` using the `-m` flag.
 - **Request Body Support**: New `-b` (body) flag allows passing a sample JSON body for POST/PUT requests to infer structure.
-- **Auto-DI Integration**: Automatically registers generated services, repositories, and use cases in `injection_container.dart` (GetIt).
-- **Unit Test Generation**: Scaffolds specialized unit tests for services and repositories by default.
+- **Auto-DI Integration**: Automatically registers generated services, repositories, and use cases in `injection_container.dart` (GetIt) with **architecture-aware import paths**.
+- **Unit Test Generation**: Scaffolds specialized unit tests for services and repositories with correct directory structures (`test/features/X/data/services`).
 - **Clean Architecture aware**: Entities and Models are correctly linked (models extend entities) for perfect cross-layer type safety.
 
 ### 🏗️ Architectural Core & Stability
@@ -15,6 +15,8 @@
 - **Theme Safety**: Hardened the generated `ChatThemeExtension` with null-safe fallbacks.
 
 ### 🐞 Bug Fixes
+- **Local File Support**: Fixed the `api` command's `_fetchApiResponse` to correctly handle `file:///` URIs for local testing and specification.
+- **Import Resolution**: Fixed incorrect relative imports in Repository Implementations and Unit Tests for Clean Architecture projects.
 - **Asset Registration**: Automatically registers `.env.dev` and `.env.prod` as assets in `pubspec.yaml`.
 - **Path Handling**: Fixed path leakage for test files and improved consistency across all transactional operations.
 - **Type Safety**: Resolved return type mismatches and improved field inference for complex JSON responses.

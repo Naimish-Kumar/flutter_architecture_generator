@@ -33,7 +33,7 @@ $constructor
         superConstructor != null ? ' : super(\n$superConstructor\n  )' : '';
     final entityImport = superName != null
         ? "import 'package:$packageName/features/$snakeFeature/domain/entities/${fileName}_entity.dart';\n"
-        : "";
+        : '';
 
     return '''
 import 'package:json_annotation/json_annotation.dart';
@@ -151,7 +151,7 @@ abstract class I${className}Repository {
       return '''
 import '../../domain/repositories/${fileName}_repository.dart';
 import '../../domain/entities/${fileName}_entity.dart';
-import '../datasources/${fileName}_service.dart';
+import '../services/${fileName}_service.dart';
 
 class ${className}RepositoryImpl implements I${className}Repository {
   final ${className}Service _service;
@@ -225,15 +225,18 @@ class Get${className}UseCase {
     required String fileName,
     required String packageName,
     required String snakeFeature,
+    bool isClean = true,
   }) {
+    final servicePath = isClean ? 'data/services' : 'services';
+    final modelPath = isClean ? 'data/models' : 'models';
     return '''
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:dio/dio.dart';
 import 'package:$packageName/core/network/api_client.dart';
-import 'package:$packageName/features/$snakeFeature/services/${fileName}_service.dart';
-import 'package:$packageName/features/$snakeFeature/models/${fileName}_model.dart';
+import 'package:$packageName/features/$snakeFeature/$servicePath/${fileName}_service.dart';
+import 'package:$packageName/features/$snakeFeature/$modelPath/${fileName}_model.dart';
 
 @GenerateMocks([ApiClient])
 void main() {
@@ -265,8 +268,9 @@ void main() {
     bool isClean = true,
   }) {
     final repoSuffix = isClean ? 'Impl' : '';
+    final servicePath = isClean ? 'data/services' : 'services';
     final serviceImport =
-        "import 'package:$packageName/features/$snakeFeature/services/${fileName}_service.dart';";
+        "import 'package:$packageName/features/$snakeFeature/$servicePath/${fileName}_service.dart';";
 
     return '''
 import 'package:flutter_test/flutter_test.dart';

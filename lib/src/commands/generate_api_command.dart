@@ -304,9 +304,11 @@ class GenerateApiCommand extends Command<int> {
         fileName: snakeName,
         packageName: packageName,
         snakeFeature: snakeFeature,
+        isClean: isClean,
       );
       BaseGenerator.writeFile(
-          p.join(testPath, 'services', '${snakeName}_service_test.dart'),
+          p.join(testPath, isClean ? 'data/services' : 'services',
+              '${snakeName}_service_test.dart'),
           serviceTest);
 
       final repoTest = ApiTemplates.repositoryTestContent(
@@ -325,12 +327,22 @@ class GenerateApiCommand extends Command<int> {
 
   Future<dynamic> _fetchApiResponse(String url,
       {String method = 'GET', String? body}) async {
+    final uri = Uri.parse(url);
+
+    if (uri.isScheme('file')) {
+      final file = File(uri.toFilePath());
+      if (!await file.exists()) {
+        throw 'Local file not found: ${uri.toFilePath()}';
+      }
+      final content = await file.readAsString();
+      return json.decode(content);
+    }
+
     final client = HttpClient();
     String? token;
 
     try {
       while (true) {
-        final uri = Uri.parse(url);
         final request = await client.openUrl(method, uri);
 
         if (token != null) {
@@ -450,10 +462,6 @@ class GenerateApiCommand extends Command<int> {
 }
 
 class _ApiModelTask {
-  final String pascalName;
-  final String snakeName;
-  final dynamic data;
-  final bool isRoot;
 
   _ApiModelTask({
     required this.pascalName,
@@ -461,4 +469,8 @@ class _ApiModelTask {
     required this.data,
     this.isRoot = false,
   });
+  final String pascalName;
+  final String snakeName;
+  final dynamic data;
+  final bool isRoot;
 }

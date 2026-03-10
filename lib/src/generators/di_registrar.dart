@@ -203,8 +203,9 @@ class DIRegistrar {
 
     String contents = diFile.readAsStringSync();
 
+    final serviceDir = config.getServicesDirectory();
     final imports = <String>[
-      "import 'package:$packageName/features/$snakeFeature/services/${snakeName}_service.dart';",
+      "import 'package:$packageName/features/$snakeFeature/$serviceDir/${snakeName}_service.dart';",
       if (config.architecture == Architecture.clean) ...[
         "import 'package:$packageName/features/$snakeFeature/domain/repositories/${snakeName}_repository.dart';",
         "import 'package:$packageName/features/$snakeFeature/data/repositories/${snakeName}_repository_impl.dart';",

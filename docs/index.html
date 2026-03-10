@@ -4,45 +4,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flutter Arch Gen | Documentation</title>
+    <title>Flutter Arch Gen | Enterprise Flutter Scaffolding</title>
+    <meta name="description"
+        content="Ultimate CLI tool for Flutter project scaffolding with Clean Architecture, MVVM, and BLoC.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=1.2.2">
+    <link rel="stylesheet" href="style.css?v=1.2.4">
 </head>
 
 <body class="dark-mode">
+    <div id="copy-toast" class="toast">Copied to clipboard!</div>
+
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">
+            <div class="logo" onclick="scrollToSection('hero')">
                 <i class="ph-fill ph-rocket-launch"></i>
                 <span>FlutterArch<span>Gen</span></span>
             </div>
             <div class="nav-links">
-                <a href="#hero">Overview</a>
-                <a href="#features">Features</a>
-                <a href="#commands">Commands</a>
+                <a href="#hero">Home</a>
+                <a href="#getting-started">Setup</a>
                 <a href="#architecture">Architecture</a>
-                <a href="https://pub.dev/packages/flutter_architecture_generator" class="btn btn-primary">Pub.dev <i
-                        class="ph ph-arrow-square-out"></i></a>
+                <a href="#commands">Commands</a>
+                <a href="#configuration">Config</a>
+                <a href="https://pub.dev/packages/flutter_architecture_generator" class="btn btn-primary btn-sm">pub.dev
+                    <i class="ph ph-arrow-square-out"></i></a>
             </div>
         </div>
     </nav>
+
     <main>
         <!-- Hero Section -->
         <section id="hero" class="hero">
             <div class="hero-content">
-                <div class="badge">v1.2.0 • Production Ready</div>
+                <div class="badge">v1.2.4 • Production Ready</div>
                 <h1>Architect Your Next <span class="gradient-text">Masterpiece</span></h1>
-                <p>The most powerful CLI tool to scaffold professional Flutter projects. From Clean Architecture to
-                    real-time Chat modules, generate production-ready code in seconds.</p>
+                <p>The most powerful CLI tool to scaffold professional Flutter projects. From enterprise <b>Clean
+                        Architecture</b> to
+                    real-time <b>Chat modules</b>, generate production-ready code in seconds.</p>
                 <div class="hero-actions">
-                    <button class="btn btn-glow" onclick="scrollToSection('commands')" style="width: 150px;">Get
-                        Started</button>
+                    <div class="action-row">
+                        <button class="btn btn-glow" onclick="scrollToSection('getting-started')">View
+                            Documentation</button>
+                        <a href="https://github.com/Naimish-Kumar/flutter_architecture_generator"
+                            class="btn btn-outline" target="_blank">
+                            <i class="ph ph-github-logo"></i> GitHub
+                        </a>
+                    </div>
                     <div class="command-pills">
                         <code>dart pub global activate flutter_architecture_generator</code>
                         <button class="copy-btn" onclick="copyInstallCommand()"><i class="ph ph-copy"></i></button>
@@ -54,7 +66,7 @@
                     <img src="./banner.png" alt="Banner" class="hero-banner">
                 </div>
                 <div class="floating-elements">
-                    <div class="float-item clean">Clean</div>
+                    <div class="float-item clean">Clean Arch</div>
                     <div class="float-item bloc">BLoC</div>
                     <div class="float-item mvvm">MVVM</div>
                 </div>
@@ -77,221 +89,289 @@
             </div>
             <div class="stat-card">
                 <h3><i class="ph-fill ph-check-circle"></i></h3>
-                <p>Battle Tested</p>
+                <p>Enterprise Ready</p>
             </div>
         </section>
 
-        <!-- How It Works Section -->
-        <section class="section">
+        <!-- Detailed Getting Started -->
+        <section id="getting-started" class="section">
             <div class="section-header">
-                <h2>Generate in <span class="gradient-text">3 Simple Steps</span></h2>
-                <p>Streamline your workflow from initialization to final polish.</p>
+                <span class="sub-header">Quick Start</span>
+                <h2>Setup in <span class="gradient-text">60 Seconds</span></h2>
+                <p>Streamline your entire development workflow from initialization to final release.</p>
             </div>
-            <div class="how-it-works">
-                <div class="step glass-panel">
-                    <div class="step-num">01</div>
-                    <div class="step-icon"><i class="ph ph-gear-six"></i></div>
-                    <h3>Initialize</h3>
-                    <p>Run <code>init</code> to scaffold your project foundation with your selected architecture and
-                        routing.</p>
-                </div>
-                <div class="step glass-panel">
-                    <div class="step-num">02</div>
-                    <div class="step-icon"><i class="ph ph-layout"></i></div>
-                    <h3>Build Feature</h3>
-                    <p>Use <code>feature</code> to generate all layers instantly. Dependencies are auto-wired for you.
-                    </p>
-                </div>
-                <div class="step glass-panel">
-                    <div class="step-num">03</div>
-                    <div class="step-icon"><i class="ph ph-rocket-launch"></i></div>
-                    <h3>Refine & Deploy</h3>
-                    <p>Fine-tune with <code>model</code> and <code>theme</code> commands. You're ready for production!
-                    </p>
-                </div>
-            </div>
-        </section>
 
-        <!-- Features Grid -->
-        <section id="features" class="section bg-alt">
-            <div class="section-header">
-                <h2>Why Choose <span class="gradient-text">FlutterArchGen?</span></h2>
-                <p>Built for developers who demand clean, scalable, and maintainable code.</p>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph-fill ph-blueprint"></i></div>
-                    <h3>Industry Patterns</h3>
-                    <p>Go beyond simple templates. We support Clean Architecture, MVVM, and multiple state management
-                        options out of the box.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph-fill ph-chat-centered-dots"></i></div>
-                    <h3>Premium Modules</h3>
-                    <p>Included real-time Chat system with Socket.io, threaded replies, and message status tracking —
-                        production ready.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph-fill ph-palette"></i></div>
-                    <h3>Dynamic Theming</h3>
-                    <p>A complete Design System generator with Light/Dark mode transitions and easily extensible color
-                        tokens.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon"><i class="ph-fill ph-shield-check"></i></div>
-                    <h3>Robust Toolkit</h3>
-                    <p>Commands for renaming, deleting, and even migrating features. Safety first with built-in undo
-                        capabilities.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Chat Feature Spotlight -->
-        <section class="section spotlight-section">
-            <div class="spotlight-container">
-                <div class="spotlight-visual">
-                    <div class="chat-mockup">
-                        <div class="chat-header">
-                            <div class="chat-user">
-                                <span class="status-dot"></span>
-                                <div>
-                                    <h4>Real-time Chat</h4>
-                                    <p>Online</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="chat-body">
-                            <div class="msg received">How's the new architecture?</div>
-                            <div class="msg sent">Scaling perfectly. Just generated it!</div>
-                            <div class="msg received">The Socket.io integration is smooth.</div>
-                            <div class="msg sent">And the BLoC state management makes it reactive.</div>
-                            <div class="typing-indicator"><span></span><span></span><span></span></div>
+            <div class="guide-steps">
+                <div class="guide-item glass-panel">
+                    <div class="guide-num">01</div>
+                    <div class="guide-content">
+                        <h3>Installation</h3>
+                        <p>Install the generator globally using the Dart package manager.</p>
+                        <div class="code-snippet">
+                            <code>dart pub global activate flutter_architecture_generator</code>
                         </div>
                     </div>
                 </div>
-                <div class="spotlight-text">
-                    <div class="badge">Feature Spotlight</div>
-                    <h2>Production-Ready <span class="gradient-text">Chat Module</span></h2>
-                    <p>Generate a complete real-time communication system in one command. Our chat module isn't just a
-                        UI—it's a fully-integrated architectural powerhouse.</p>
-                    <ul class="spotlight-list">
-                        <li><i class="ph-fill ph-broadcast"></i> <strong>Socket.io Integration:</strong> Auto-configured
-                            real-time event handling.</li>
-                        <li><i class="ph-fill ph-database"></i> <strong>Persistence Ready:</strong> Designed for easy
-                            local DB integration.</li>
-                        <li><i class="ph-fill ph-tree-structure"></i> <strong>Clean Architecture:</strong> Domain, Data,
-                            and Presentation layers auto-wired.</li>
-                        <li><i class="ph-fill ph-lightning"></i> <strong>Optimistic Updates:</strong> Smooth UX with
-                            instant message feedback.</li>
-                    </ul>
-                    <div class="code-pill">
-                        <code>flutter_arch_gen feature chat</code>
+                <div class="guide-item glass-panel">
+                    <div class="guide-num">02</div>
+                    <div class="guide-content">
+                        <h3>Initialize Project</h3>
+                        <p>Set up the architectural foundation in your existing Flutter project.</p>
+                        <div class="code-snippet">
+                            <code>flutter_arch_gen init</code>
+                        </div>
+                    </div>
+                </div>
+                <div class="guide-item glass-panel">
+                    <div class="guide-num">03</div>
+                    <div class="guide-content">
+                        <h3>Generate Features</h3>
+                        <p>Create a full feature module with Domain, Data, and UI layers instantly.</p>
+                        <div class="code-snippet">
+                            <code>flutter_arch_gen feature auth</code>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Command Highlight -->
-        <section class="section">
-            <div class="command-highlight">
-                <div class="cmd-card">
-                    <div class="cmd-card-header">
-                        <div class="dots"><span></span><span></span><span></span></div>
-                        <div class="title">Command Center</div>
+        <!-- Architecture Deep Dive -->
+        <section id="architecture" class="section bg-alt overflow-hidden">
+            <div class="section-header">
+                <span class="sub-header">Framework</span>
+                <h2>Mastering <span class="gradient-text">Clean Architecture</span></h2>
+                <p>Designed for scalability, testability, and separation of concerns.</p>
+            </div>
+
+            <div class="architecture-grid">
+                <div class="arch-info">
+                    <div class="layer-card" data-layer="domain">
+                        <div class="layer-icon"><i class="ph-fill ph-tree-structure"></i></div>
+                        <h3>Domain Layer (The Core)</h3>
+                        <p>Contains Business Logic, Entities, and Repository Interfaces. This layer is completely
+                            independent of any other layer or framework.</p>
+                        <ul>
+                            <li><i class="ph ph-check"></i> Entities (Plain Dart Objects)</li>
+                            <li><i class="ph ph-check"></i> Use Cases (Business Logic)</li>
+                            <li><i class="ph ph-check"></i> Repository Interfaces</li>
+                        </ul>
                     </div>
-                    <div class="cmd-card-body">
-                        <span class="prompt">$</span> flutter_arch_gen feature --name chat --architecture clean
-                        <p class="description">// Generates 15+ files across all clean architecture layers</p>
-                        <p class="description">// Auto-registers DI and Router modules</p>
+                    <div class="layer-card" data-layer="data">
+                        <div class="layer-icon"><i class="ph-fill ph-database"></i></div>
+                        <h3>Data Layer</h3>
+                        <p>Implements the Domain interfaces and handles data from remote APIs (Dio) or local storage.
+                        </p>
+                        <ul>
+                            <li><i class="ph ph-check"></i> Models (JSON Serialization)</li>
+                            <li><i class="ph ph-check"></i> Data Sources (API/DB calls)</li>
+                            <li><i class="ph ph-check"></i> Repository Implementations</li>
+                        </ul>
+                    </div>
+                    <div class="layer-card" data-layer="presentation">
+                        <div class="layer-icon"><i class="ph-fill ph-pencil-circle"></i></div>
+                        <h3>Presentation Layer</h3>
+                        <p>Everything related to UI and state management. BLoC, Cubit, or Provider live here.</p>
+                        <ul>
+                            <li><i class="ph ph-check"></i> Views/Pages</li>
+                            <li><i class="ph ph-check"></i> State Management (BLoC/Cubit)</li>
+                            <li><i class="ph ph-check"></i> Widgets & Themes</li>
+                        </ul>
                     </div>
                 </div>
-                <div class="cmd-text">
-                    <h2>Ultimate <span class="gradient-text">Control</span></h2>
-                    <p>Every command is designed to be fast, predictable, and highly configurable. Build your entire app
-                        architecture in minutes, not days.</p>
-                    <ul class="cmd-feature-list">
-                        <li><i class="ph ph-check"></i> Standardized File Structures</li>
-                        <li><i class="ph ph-check"></i> Smart Import Management</li>
-                        <li><i class="ph ph-check"></i> Automated Dependency Injection</li>
-                    </ul>
+                <div class="arch-visual-pro">
+                    <div class="visual-node domain">Domain</div>
+                    <div class="visual-arrow"><i class="ph ph-arrow-down"></i></div>
+                    <div class="visual-node data">Data</div>
+                    <div class="visual-arrow"><i class="ph ph-arrow-down"></i></div>
+                    <div class="visual-node presentation">Presentation</div>
+                    <div class="visual-glow"></div>
                 </div>
             </div>
         </section>
-        <section id="commands" class="section bg-alt">
-            <div class="section-header" style="margin-top: 60px;">
+
+        <!-- Command Explorer -->
+        <section id="commands" class="section">
+            <div class="section-header">
+                <span class="sub-header">Documentation</span>
                 <h2>Command <span class="gradient-text">Reference</span></h2>
-                <p>Complete control at your fingertips. Discover every flag and option available.</p>
+                <p>Every tool you need to build faster, cleaner apps.</p>
             </div>
 
-            <div class="command-explorer">
-                <div class="command-sidebar">
-                    <div class="search-box">
+            <div class="command-explorer-pro glass-panel">
+                <div class="explorer-sidebar">
+                    <div class="search-box-pro">
                         <i class="ph ph-magnifying-glass"></i>
-                        <input type="text" id="commandSearch" placeholder="Filter commands..."
+                        <input type="text" id="commandSearch" placeholder="Search commands..."
                             oninput="filterCommands()">
                     </div>
-                    <div class="command-list" id="commandList">
+                    <div class="command-list-pro" id="commandList">
                         <!-- Populated by JS -->
                     </div>
                 </div>
-                <div class="command-detail">
-                    <div id="commandDetailContent" class="glass-panel">
-                        <div class="empty-state">
+                <div class="explorer-content">
+                    <div id="commandDetailContent">
+                        <div class="empty-explorer">
                             <i class="ph ph-terminal-window"></i>
-                            <p>Select a command to view details</p>
+                            <p>Select a command to dive deep into its usage and capabilities.</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Architecture Showcase -->
-        <section id="architecture" class="section architecture-section">
-            <div class="section-header">
-                <h2>Deep Dive into <span class="gradient-text">Clean Architecture</span></h2>
-                <p>Our flagship pattern for enterprise-grade applications.</p>
-            </div>
-            <div class="arch-visual-container">
-                <div class="arch-layer presentation">
-                    <div class="layer-info">
-                        <h3>Presentation</h3>
-                        <p>Pages, Widgets, BLoC/Providers</p>
+        <!-- API Generator Special Section -->
+        <section class="section spotlight-section">
+            <div class="spotlight-container">
+                <div class="spotlight-text">
+                    <div class="badge-pro">New in v1.2.4</div>
+                    <h2>The Ultimate <span class="gradient-text">API Engine</span></h2>
+                    <p>Scaffold entire data layers from a sample JSON or a live endpoint. Our engine
+                        intelligently infers types, generates recursive models, and sets up DI & Tests.</p>
+
+                    <div class="feature-pills">
+                        <span class="pill"><i class="ph ph-arrows-merge"></i> Recursive Models</span>
+                        <span class="pill"><i class="ph ph-shield-check"></i> Auth Headers</span>
+                        <span class="pill"><i class="ph ph-test-tube"></i> Auto Testing</span>
+                        <span class="pill"><i class="ph ph-file-json"></i> Local File Support</span>
+                    </div>
+
+                    <div class="code-card">
+                        <div class="code-header">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                            <span class="file-path">terminal</span>
+                        </div>
+                        <div class="code-body">
+                            <code>flutter_arch_gen api User -u file:///sample.json -m POST -b '{"name":"test"}' -f auth</code>
+                        </div>
                     </div>
                 </div>
-                <div class="arch-arrow"><i class="ph ph-arrow-down"></i></div>
-                <div class="arch-layer domain">
-                    <div class="layer-info">
-                        <h3>Domain</h3>
-                        <p>Entities, UseCases, Repository Interfaces</p>
-                    </div>
-                </div>
-                <div class="arch-arrow"><i class="ph ph-arrow-down"></i></div>
-                <div class="arch-layer data">
-                    <div class="layer-info">
-                        <h3>Data</h3>
-                        <p>Models, DataSources, Repo Impls</p>
+                <div class="spotlight-visual-pro">
+                    <div class="mock-json-card">
+                        <pre><code>{
+  "user": {
+    "name": "Naimish",
+    "address": {
+      "city": "Mumbai"
+    }
+  }
+}</code></pre>
+                        <div class="inference-lines">
+                            <div class="line">➔ Generated UserModel</div>
+                            <div class="line">➔ Generated AddressModel</div>
+                            <div class="line">➔ Generated UserEntity</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Support Section -->
-        <section class="section support-section">
-            <div class="glass-panel support-card">
-                <h2>Love the project?</h2>
-                <p>Help us keep gravity at bay. Support the maintenance and development of new features, or connect with
-                    the creator.</p>
-                <div class="support-btns">
-                    <a href="https://www.buymeacoffee.com/naimish" class="btn btn-coffee" target="_blank">
-                        <i class="ph-fill ph-coffee"></i> Buy me a coffee
-                    </a>
-                    <a href="https://github.com/Naimish-Kumar/flutter_architecture_generator" class="btn btn-outline"
+        <!-- Configuration Section -->
+        <section id="configuration" class="section bg-alt">
+            <div class="section-header">
+                <span class="sub-header">Customization</span>
+                <h2>Power <span class="gradient-text">Configuration</span></h2>
+                <p>Customize the generator behavior to match your team's coding style via
+                    <code>.flutter_arch_gen.json</code>.
+                </p>
+            </div>
+
+            <div class="config-container">
+                <div class="config-grid">
+                    <div class="config-item glass-panel">
+                        <h3>architecture</h3>
+                        <p>Options: <code>clean</code>, <code>mvvm</code>, <code>mvc</code>, <code>bloc_standard</code>
+                        </p>
+                    </div>
+                    <div class="config-item glass-panel">
+                        <h3>state_management</h3>
+                        <p>Options: <code>bloc</code>, <code>cubit</code>, <code>provider</code>, <code>riverpod</code>
+                        </p>
+                    </div>
+                    <div class="config-item glass-panel">
+                        <h3>theme_mode</h3>
+                        <p>Options: <code>dynamic</code>, <code>static</code></p>
+                    </div>
+                </div>
+                <div class="config-code glass-panel">
+                    <div class="code-header">.flutter_arch_gen.json</div>
+                    <pre><code>{
+  "project_name": "my_app",
+  "architecture": "clean",
+  "state_management": "bloc",
+  "state_management_package": "flutter_bloc",
+  "router": "go_router",
+  "use_freezed": true
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chat Module Section -->
+        <section class="section chat-preview-section">
+            <div class="chat-cols">
+                <div class="chat-visual-col">
+                    <div class="phone-mockup">
+                        <div class="status-bar">9:41 AM</div>
+                        <div class="app-header">
+                            <i class="ph ph-arrow-left"></i>
+                            <div class="user-info">
+                                <b>Chat Module</b>
+                                <span>Online</span>
+                            </div>
+                            <i class="ph ph-dots-three-vertical"></i>
+                        </div>
+                        <div class="chat-messages">
+                            <div class="bubble received">Ready to upgrade?</div>
+                            <div class="bubble sent">Just ran <code>v1.2.4</code> update!</div>
+                            <div class="bubble received">The API command is magic. ✨</div>
+                        </div>
+                        <div class="chat-input-area">
+                            <i class="ph ph-plus-circle"></i>
+                            <div class="input-field">Type a message...</div>
+                            <i class="ph ph-paper-plane-right-fill"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-text-col">
+                    <span class="badge-pro">Enterprise Module</span>
+                    <h2>Real-time <span class="gradient-text">Chat Engine</span></h2>
+                    <p>Don't waste weeks building chat foundations. Generate a battle-tested Socket.io chat module that
+                        scales to millions.</p>
+                    <div class="pro-features-list">
+                        <div class="pro-f"><i class="ph ph-broadcast"></i> Socket.io v4+ Client</div>
+                        <div class="pro-f"><i class="ph ph-stack"></i> Threaded Conversations</div>
+                        <div class="pro-f"><i class="ph ph-clock"></i> Message Status Tracking</div>
+                        <div class="pro-f"><i class="ph ph-user-list"></i> User Presence Logic</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Social & Star -->
+        <section class="section star-section">
+            <div class="star-card glass-panel">
+                <div class="community-highlights">
+                    <span class="c-tag"><i class="ph ph-heart-fill"></i> Open Source</span>
+                    <span class="c-tag"><i class="ph ph-users-fill"></i> 500+ Devs</span>
+                    <span class="c-tag"><i class="ph ph-star-fill"></i> Growing Fast</span>
+                </div>
+                <div class="community-icon"><i class="ph-fill ph-users-three"></i></div>
+                <h2>Loved by <span class="gradient-text">Modern Developers</span></h2>
+                <p>Help us stay gravity-free. Join our growing community of architects, star the project on GitHub, or
+                    connect with the engine core to help us build the future of Flutter development.</p>
+                <div class="social-btns">
+                    <a href="https://github.com/Naimish-Kumar/flutter_architecture_generator" class="btn btn-github"
                         target="_blank">
-                        <i class="ph ph-github-logo"></i> Star on GitHub
+                        <i class="ph-fill ph-github-logo"></i> Star on GitHub
                     </a>
                     <a href="https://www.linkedin.com/in/naimish-kumar-verma-9b88731b9/" class="btn btn-linkedin"
                         target="_blank">
-                        <i class="ph ph-linkedin-logo"></i> Connect on LinkedIn
+                        <i class="ph-fill ph-linkedin-logo"></i> Connect on LinkedIn
+                    </a>
+                    <a href="https://www.buymeacoffee.com/naimish" class="btn btn-coffee" target="_blank">
+                        <i class="ph-fill ph-coffee"></i> Support Innovation
                     </a>
                 </div>
             </div>
@@ -300,26 +380,35 @@
 
     <footer>
         <div class="footer-container">
-            <div class="footer-left">
+            <div class="footer-brand">
                 <div class="logo">
                     <i class="ph-fill ph-rocket-launch"></i>
                     <span>FlutterArchGen</span>
                 </div>
-                <p>© 2026 Naimish Kumar. MIT Licensed.</p>
+                <p>Designed for excellence. Built for speed.</p>
             </div>
-            <div class="footer-right">
-                <div class="social-links">
-                    <a href="https://github.com/Naimish-Kumar/flutter_architecture_generator" target="_blank"><i
-                            class="ph ph-github-logo"></i></a>
-                    <a href="https://www.linkedin.com/in/naimish-kumar-verma-9b88731b9/" target="_blank"><i
-                            class="ph ph-linkedin-logo"></i></a>
-                    <a href="mailto:acrocoader@gmail.com"><i class="ph ph-envelope"></i></a>
+            <div class="footer-links-grid">
+                <div class="f-col">
+                    <h4>Resources</h4>
+                    <a href="#getting-started">Installation</a>
+                    <a href="#commands">Documentation</a>
+                    <a href="#architecture">Patterns</a>
                 </div>
+                <div class="f-col">
+                    <h4>Social</h4>
+                    <a href="https://github.com/Naimish-Kumar">GitHub</a>
+                    <a href="https://pub.dev/packages/flutter_architecture_generator">Pub.dev</a>
+                    <a href="https://twitter.com/acrocoader">Twitter</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2026 Naimish Kumar. MIT Licensed.</p>
+                <div class="version">v1.2.4 (stable)</div>
             </div>
         </div>
     </footer>
 
-    <script src="script.js?v=1.2.2"></script>
+    <script src="script.js?v=1.2.4"></script>
 </body>
 
 </html>
